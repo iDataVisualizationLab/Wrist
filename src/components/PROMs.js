@@ -48,6 +48,7 @@ const Template = {
 
 function PROMs(props) {
     const classes = useStyles();
+    const {func} = props;
     const [PSFS, setPSFS] = React.useState(new Array(3));
     const [PRWE, setPRWE] = React.useState(new Array(17));
     const [MHQ, setMHQ] = React.useState(new Array(5));
@@ -66,6 +67,13 @@ function PROMs(props) {
         MHQ[index] = val;
         setMHQ([...MHQ]);
     };
+
+    props.getOutputData({PSFS,PRWE,MHQ,'PSFS score':func['PSFS score'](PSFS),
+        'PRWE Pain Scale':func['PRWE Pain Scale'](PRWE),
+        'PRWE Function subscale':func['PRWE Function subscale'](PRWE),
+        'SANE score':func['SANE score'](PRWE),
+        'MHQ score':func['MHQ score'](MHQ),
+    });
     return (
         <Grid container spacing={2}
               justify="center"

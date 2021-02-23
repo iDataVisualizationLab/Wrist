@@ -51,26 +51,32 @@ function ObjectiveMeasurement(props) {
         "TAM EX-0-Flex": {
             "Involved Hand": [0, 0],
             "Contra-lateral Hand": [0, 0],
+            "result":0
         },
         "TAM Pro-0-Sup": {
             "Involved Hand": [0, 0],
             "Contra-lateral Hand": [0, 0],
+            "result":0
         },
         "TAM Rad-0-Ulnar": {
             "Involved Hand": [0, 0],
             "Contra-lateral Hand": [0, 0],
+            "result":0
         },
         "Mean of 3 Trials": {
             "Involved Hand": [0, 0, 0],
             "Contra-lateral Hand": [0, 0, 0],
+            "result":0
         },
         "Grip Strength Supination Ratio": {
             "Involved Hand": [0],
             "Contra-lateral Hand": [0],
+            "result":0
         },
         "Grip Strength Pronation Ratio": {
             "Involved Hand": [0],
             "Contra-lateral Hand": [0],
+            "result":0
         }
     });
     useEffect(() => {
@@ -78,6 +84,10 @@ function ObjectiveMeasurement(props) {
             setData(this.props.data)
         }
     });
+    const getOutputData = ()=>{
+        Object.keys(data).forEach(k=>data[k].result = props.func[k](data[k]['Involved Hand'],data[k]['Contra-lateral Hand']));
+        props.getOutputData({...data});
+    };
     const handleChange = (event, mainKey, subKey, index) => {
         data[mainKey][subKey][index] = event.target.value;
         setData({...data});
@@ -117,11 +127,14 @@ function ObjectiveMeasurement(props) {
                 <Grid item xs>
                     <span>{d['key']}</span>
                 </Grid>
-                <Grid item className={classes.input}>
-                    <span className={classes.func}>{props.func[d['key']](data[d['key']]['Involved Hand'])}</span>
-                </Grid>
-                <Grid item className={classes.input}>
-                    <span className={classes.func}>{props.func[d['key']](data[d['key']]['Contra-lateral Hand'])}</span>
+                {/*<Grid item className={classes.input}>*/}
+                {/*    <span className={classes.func}>{props.func[d['key']](data[d['key']]['Involved Hand'])}</span>*/}
+                {/*</Grid>*/}
+                {/*<Grid item className={classes.input}>*/}
+                {/*    <span className={classes.func}>{props.func[d['key']](data[d['key']]['Contra-lateral Hand'])}</span>*/}
+                {/*</Grid>*/}
+                <Grid item className={classes.input2}>
+                    <span className={classes.func}>{props.func[d['key']](data[d['key']]['Involved Hand'],data[d['key']]['Contra-lateral Hand'])}</span>
                 </Grid>
             </Grid></>)
     };
@@ -161,6 +174,7 @@ function ObjectiveMeasurement(props) {
                 </Grid>
             </Grid></>)
     };
+    getOutputData();
     return (<Grid container spacing={0.5} direction="column"
                   justify="center"
                   alignItems="stretch">

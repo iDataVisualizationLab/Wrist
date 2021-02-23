@@ -179,7 +179,7 @@ function UserInfo(props) {
                                         <TableCell>Has patient return to work?</TableCell>
                                     </TableRow>
                                 </TableHead>
-                            </Table>
+
                             <TableBody>
                                 {data['Wrist Index'].map(d=><TableRow>
                                     <TableCell>
@@ -190,6 +190,7 @@ function UserInfo(props) {
                                     </TableCell>
                                 </TableRow>)}
                             </TableBody>
+                            </Table>
                         </TableContainer>
                     }</>
                     }

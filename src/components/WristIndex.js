@@ -43,14 +43,14 @@ function getStepContent(step,props) {
                                InputLabelProps={{shrink: true}}
                                fullWidth margin="dense"
                                label="Date of Evaluation" name="Date"
-                               onChange={props.handleChange} variant="outlined"/>
+                               onChange={event=>props.getOutputData({"Date":event.target.value})} variant="outlined"/>
 
                 </Grid>
                 <Grid item xs>
                     <TextField select
                                fullWidth margin="dense"
                                label="Has patient returned to work?" name="isReturnToWork"
-                               onChange={props.handleChange} variant="outlined">
+                               onChange={event=>props.getOutputData({"isReturnToWork":event.target.value})} variant="outlined">
                         <MenuItem value="Yes">Yes</MenuItem>
                         <MenuItem value="No">No</MenuItem>
                     </TextField>
@@ -117,6 +117,7 @@ function WristIndex(props) {
     const handleReset = () => {
         setActiveStep(0);
     };
+
     return (
         <Dialog
             // disableBackdropClick

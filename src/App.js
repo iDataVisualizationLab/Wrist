@@ -8,13 +8,12 @@ import {AppBar, Toolbar, Typography, IconButton, Container} from "@material-ui/c
 import MenuIcon from '@material-ui/icons/Menu';
 import Grid from "@material-ui/core/Grid";
 import UserInfo from "./components/userInfo";
-import {sum,mean} from "d3";
+import {sum, mean,count} from "d3";
 import PROMs from "./components/PROMs";
 import WristIndex from "./components/WristIndex";
-import ObjectiveMeasurement from "./components/ObjectiveMeasurements";
-import AddIcon from "@material-ui/icons/Add";
-import Button from "@material-ui/core/Button";
+import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import * as axios from "axios";
+import WristViz from "./components/wristViz";
 
 const THEME = createMuiTheme({
     typography: {
@@ -50,19 +49,25 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const func ={
-    'TAM EX-0-Flex':(arr)=>sum(arr),
-    'TAM Pro-0-Sup':(arr)=>sum(arr),
-    'TAM Rad-0-Ulnar':(arr)=>sum(arr),
-    'Mean of 3 Trials': (arr)=> sum(arr)/3,
+    'TAM EX-0-Flex':(arr,arr2)=>sum(arr)/sum(arr2),
+    'TAM Pro-0-Sup':(arr,arr2)=>sum(arr)/sum(arr2),
+    'TAM Rad-0-Ulnar':(arr,arr2)=>sum(arr)/sum(arr2),
+    'Mean of 3 Trials': (arr,arr2)=> (sum(arr)/3)/(sum(arr2)/3),
     'Grip Strength Supination Ratio':(a,b)=> a/b,
     'Grip Strength Pronation Ratio':(a,b)=> a/b,
-}
+    'PSFS score':(PSFS)=>mean(PSFS),
+    'PRWE Pain Scale':(PRWE)=>sum(PRWE.slice(0,5)),
+    'PRWE Function subscale':(PRWE)=>(sum(PRWE.slice(5, 15))+(10-count(PRWE.slice(5, 15)))*mean(PRWE.slice(5, 15)))/2,
+    'SANE score':(PRWE)=>PRWE[17],
+    'MHQ score':(MHQ)=>(sum(MHQ)-5)/20*100,
+};
 
 function App() {
     const classes = useStyles();
     const [busy, setBusy] = React.useState(true);
     const [userData, setuserData] = React.useState({});
     const [userInfoView, setuserInfoView] = React.useState(false);
+    const newIndexData = React.useRef({});
     const [onNewIndex, setonNewIndex] = React.useState(false);
     const [page, setPage] = React.useState(0);
 
@@ -83,13 +88,22 @@ function App() {
         setPage(1);
     };
 
-    const viewPatient = (d)=>{
-        setuserData(d);
-        setPage(2);
-        setuserInfoView(true);
+    const viewPatient = (data)=>{
+        const init = data['Initials'];
+        const birth = data['Date of Birth'];
+        const gender = data['Gender'];
+        axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?init=${init}&birth=${birth}&gender=${gender}`)
+            .then(r=>{
+                debugger
+                const d= r.data;
+                setuserData(d);
+                setPage(2);
+                setuserInfoView(true);
+            });
     };
 
     const newIndex = (d)=>{
+        newIndexData.current = {};
         setonNewIndex(true);
     };
 
@@ -97,21 +111,29 @@ function App() {
         setonNewIndex(false);
     };
 
-    const handleSubmitNewIndex = (d)=>{
+    const getOutputData = (d)=>{
+        Object.keys(d).forEach(k=>{
+            newIndexData.current[k] = d[k];
+        });
+    }
+
+    const handleSubmitNewIndex = ()=>{
+        debugger;
+        const init = userData['Initials'];
+        const birth = userData['Date of Birth'];
+        const gender = userData['Gender'];
+        axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/record?init=${init}&birth=${birth}&gender=${gender}`,newIndexData.current)
+            .then((r)=>{
+                viewPatient(userData);
+            }).catch(e=>{
+            // handle error
+        });
         setonNewIndex(false);
     };
     const handleSubmitPatient = (data)=>{
         axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile`,data)
             .then(()=>{
-                // success
-                const init = data['Initials'];
-                const birth = data['Date of Birth'];
-                const gender = data['Gender'];
-                axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?init=${init}&birth=${birth}&gender=${gender}`)
-                    .then(r=>{
-                        debugger
-                        viewPatient(r.data)
-                    });
+                viewPatient(data);
             }).catch(e=>{
                 // handle error
         })
@@ -128,15 +150,16 @@ function App() {
                 return <><Grid item xs={4}>
                     <UserInfo data={userData} viewMode={userInfoView} userEditMode={!userInfoView} IndexEditMode={true} newIndex={newIndex} />
                 </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={6}>
+                        <WristViz onLoad={onLoad} data={userData['Wrist Index']}/>
                     </Grid>
                     </>;
             default:
                 return <Grid item xs={4}>
-                    <ManageUser onLoad={onLoad} newPatient={newPatient}/>
+                    <ManageUser viewPatient={viewPatient} onLoad={onLoad} newPatient={newPatient}/>
                 </Grid>;
         }
-    }
+    };
 
     return (<MuiThemeProvider theme={THEME}>
             <div className={classes.root}>
@@ -148,7 +171,7 @@ function App() {
                             color="inherit"
                             aria-label="open drawer"
                         >
-                            <MenuIcon/>
+                            {page?<ArrowBackIosIcon onClick={()=>setPage(0)}/>:''}
                         </IconButton>
                         <Typography className={classes.title} variant="h6" noWrap>
                             Wrist Index
@@ -164,7 +187,7 @@ function App() {
             >
                 {renderPage()}
             </Grid>
-            <WristIndex func={func} open={onNewIndex} handleCancel={handleCancelNewIndex} handleSubmit={handleSubmitNewIndex}/>
+            <WristIndex func={func} open={onNewIndex} handleCancel={handleCancelNewIndex} getOutputData={getOutputData} handleSubmit={handleSubmitNewIndex}/>
             <Backdrop className={classes.backdrop} open={busy !== false}>
                 <CircularProgress color="secondary"/>
                 <span>{(busy || {text: ''}).text}</span>

@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
-import {stratify} from 'd3-hierarchy';
 import * as d3 from 'd3';
 import { scaleOrdinal } from 'd3-scale';
-import {RULLwaring} from './RULwarningMap'
-import {makeStyles, withStyles} from "@material-ui/core/styles";
+import {withStyles} from "@material-ui/core/styles";
+import Text from "./Text";
 
 const styles =  theme=> ({
     menu: {
@@ -14,8 +13,28 @@ const styles =  theme=> ({
         width: '100%',
         top: '10px',
         left:0,
+    },
+    axis :{
+        transformOrigin: '0,0'
     }
 });
+
+const axis = [
+    {id: 'PSFS score', label:'PSFS (0-10 / Poor=0 ; Good=10)',range:[0,10]},
+    {id: 'PRWE Pain Scale', label:'PRWE Pain Scale (0-50 0= no pain, 10= worst pain ever)',range:[50,0]},
+    {id: 'PRWE Function subscale', label:'PRWE Function subscale (0-50 / 0= no difficulty, 10= unable to do)',range:[50,0]},
+    {id: 'SANE score', label:'SANE  rate injured body part on a scale of 0-100?/ 100= normal',range:[0,100]},
+    {id: 'MHQ score', label:'MHQ work module (1-100 / 1=always, 2=often, 3=sometimes, 4=rarely, 5=never)',range:[1,100]},
+    {id: 'TAM EX-0-Flex', label:'Wrist range motion Flexion/Extension (0= no ROM- 100% equal or better than contra-lateral  wrist )',range:[0,1]},
+    {id: 'TAM Pro-0-Sup', label:'Wrist range motion Pronation/Supination  (0= no ROM- 100% equal or better than contra-lateral wrist )',range:[0,1]},
+    {id: 'TAM Rad-0-Ulnar', label:'Wrist range motion Radial / Ulnar Deviation (0= no ROM- 100% equal or better than contra-lateral wrist )',range:[0,1]},
+    {id: 'Mean of 3 Trials', label:'Grip Strength Ratio  (0= no  grip strength - 100% equal or better than  contra-lateral wrist )',range:[0,1]},
+    {id: 'Grip Strength Supination Ratio', label:'Grip Strength  Supination Ratio (0= no  grip strength - 100% equal or better than  contra-lateral wrist )',range:[0,1]},
+    {id: 'Grip Strength Pronation Ratio', label:'Grip Strength  Pronation Ratio  (0= no  grip strength - 100% equal or better than  contra-lateral wrist )',range:[0,1]},
+];
+
+const axisAngle = d3.scaleLinear().domain([0,axis.length]).range([0,Math.PI*2]);
+
 
 class RadarChart extends React.Component{
     constructor(props) {
@@ -23,64 +42,49 @@ class RadarChart extends React.Component{
         this.svg = React.createRef();
         this.state = {
             // labels: [],
-            data: data,
-            opts:{
-                margin: {top: 50, right: 100, bottom: 0, left: 60},
-                width: 500,
-                height: 500,
-                scalezoom: 1,
-                widthView: function () {
-                    return this.width * this.scalezoom
-                },
-                heightView: function () {
-                    return this.height * this.scalezoom
-                },
-                widthG: function () {
-                    return this.widthView() - this.margin.left - this.margin.right
-                },
-                heightG: function () {
-                    return this.heightView() - this.margin.top - this.margin.bottom
-                },
-                _fontSize: this.props.displayName==='Hardware Part Description' ? 12:14,
-                fontSize: this.props.displayName==='Hardware Part Description' ? 12:14,
+            data: [],
+            margin: {top: 200, right: 200, bottom: 200, left: 200},
+            width: 800,
+            height: 800,
+            textWidth: 200,
+            widthG: function () {
+                return this.width - this.margin.left - this.margin.right
             },
-            zoomTransform: {x:0,y:0,k:1},
+            heightG: function () {
+                return this.height - this.margin.top - this.margin.bottom
+            },
+            radius: function () {
+              return Math.min(this.widthG.bind(this)(),this.heightG.bind(this)())/2;
+            },
             fontSize: 12,
-            colors:props.colors.domain?props.colors:scaleOrdinal().range(["#1f77b4", "#aec7e8", "#ff7f0e", "#ffbb78", "#2ca02c", "#98df8a", "#d62728", "#ff9896", "#9467bd", "#c5b0d5", "#8c564b", "#c49c94", "#e377c2", "#f7b6d2", "#7f7f7f", "#c7c7c7", "#bcbd22", "#dbdb8d", "#17becf", "#9edae5"])
+            colors:(props.colors&&props.colors.domain)?props.colors:scaleOrdinal().range(d3.schemeCategory10),
+            rScale: d3.scaleLinear(),
+            radarLine: d3.radialLine()
+                // .interpolate("linear-closed")
+                .curve(d3.curveCardinalClosed)
+                .radius( (d) => {
+                        return this.state.rScale(d);
+                })
+                .angle(function (d, i) {
+                    return axisAngle(i);
+                }),
+            levels: d3.range(1,6).map(d=>d/5)
         };
-        this.zoom = d3
-            .zoom()
-            .scaleExtent([-5, 5])
-            .on("zoom", this.zoomed.bind(this));
+        axis.forEach(a=>a.scale = d3.scaleLinear().domain(a.range));
     }
-    zoomed(event) {
-        this.setState({
-            zoomTransform: event.transform,
-            fontSize: this.state.opts.fontSize/event.transform.k
-        });
-    }
-    adjustFont(){
-        if(this.svg.current){
-            const currentWidth= this.svg.current.width.baseVal.value;
-            if (currentWidth){
-                const fontSize = this.state.opts._fontSize*this.state.opts.width/currentWidth;
-                const fontSize_adjust = fontSize/this.state.zoomTransform.k;
-                if(this.state.opts.fontSize!==fontSize || fontSize_adjust!==this.state.fontSize){
-                    this.state.opts.fontSize=fontSize;
-                    this.setState({fontSize:fontSize/this.state.zoomTransform.k});
-                }}
-        }
-    }
-    colorBattery = d3.scaleThreshold()
-        .domain([0.1, 0.2])
-        .range(["red", "orange", "green"]);
     componentDidMount() {
-        if (!this.props.disableZoom)
-            d3.select(this.svg.current).call(this.zoom);
-        this.adjustFont()
+        this.state.rScale.range([0,this.state.radius()]);
+            const data = (this.props.data??[]).map(d=>axis.map(a=>a.scale(((typeof (d[a.id]) === 'object')&&d[a.id])?d[a.id].result:d[a.id])));
+            console.log(data)
+        this.setState({data});
     }
     componentDidUpdate(prevProps) {
-        this.adjustFont();
+        this.state.rScale.range([0,this.state.radius()]);
+        if (this.props.data!==prevProps.data){
+            const data = (this.props.data??[]).map(d=>axis.map(a=>a.scale(((typeof (d[a.id]) === 'object')&&d[a.id])?d[a.id].result:d[a.id])));
+            console.log(data)
+            this.setState({data});
+        }
     }
     onSelect(n){
         this.props.selected(n.id,this.handleInfo(n));
@@ -99,104 +103,29 @@ class RadarChart extends React.Component{
     }
     render(){
         const { classes } = this.props;
-        const treeLink = d3.linkHorizontal().x(d => d.y).y(d => d.x);
-        const selected = this.state.data.descendants().find(d=>d.id===this.props.selected());
-        let highlightL = new Set([]);
-        if (selected)
-            highlightL = new Set(selected.descendants().filter(d=>d.data.value!=='delete'));
-        const highlight = d => highlightL.has(d);
-        if (selected) {
-            if (selected !== this.state.selected) {
-                // this.props.selected(selected.id, selected.data.info, {colors: this.state.colors});
-                this.props.selected(selected.id, this.handleInfo(selected));
-                this.setState({selected});
-            }
-        }
-
-        const iconsize =10;
-        const battery_render = (n)=>{
-            let percentage = this.props.dataRUL?this.props.dataRUL['Memsys_id'][n.data.id]??((n.data.info&&n.data.info['Hardware Info'])?this.props.dataRUL['Part Num'][n.data.info['Hardware Info'][0]['Hardware Part Number']]:undefined):undefined;
-            if (percentage!==undefined)
-                if (percentage<0)
-                    percentage = 0;
-            return <g transform={`translate(${-iconsize},${-iconsize/1.9})`}>
-                {((this.props.onSelect()??{}).id===n.data.id)?<rect width={iconsize*2.5} height={iconsize*1.5} transform={`translate(${-iconsize*0.25},${-iconsize*0.25})`} rx={3} fill="black" stroke="none">
-                    <animate attributeName="opacity" values="0;0.5;0" dur="2s" repeatCount="indefinite" />
-                </rect>:''}
-                <rect width={iconsize*2.1} height={iconsize} fill="white" stroke="none"></rect>
-                <rect fill={this.colorBattery(percentage/100)} width={percentage/100*iconsize*2.1} height={iconsize} stroke="none"></rect>
-                <rect width={iconsize*2.1} height={iconsize} rx={2} fill="none" strokeWidth={2} stroke="white"></rect>
-                <rect width={iconsize*2.1} height={iconsize} rx={2} fill="none" strokeWidth={0.5} stroke="#444"></rect>
-            </g>
-            return <g transform={`translate(${-iconsize},${-iconsize/2})`}>
-                <rect width={iconsize*2} height={iconsize} fill="white" strokeDasharray={"1 1"} strokeWidth={1} stroke={"black"}></rect>
-            </g>
-        };
-        const _iconsize = this.props.isCircle?iconsize: iconsize/2;
-        const render = (n)=>{
-            if (n.parent==null)
-                return <circle r={3} fill={highlight(n) ? "black" : "white"} stroke={"black"} strokeWidth={1}></circle>
-            if(n.data.info&&n.data.info['Member System Id']){
-                let out = '';
-                let offset = 0;
-                if (n.data.errorType || !(this.props.displayName==='Issue Icons'))
-                {
-                    if (this.props.isCircle)
-                        return <circle r={3} fill={highlight(n) ? this.state.colors(n.id) : n.children ? "#555" : "#999"}></circle>
-                    else
-                        return out
-                }
-                if (n.data.warningType){
-                    n.data.warningType.forEach(type=>{
-                        if (!this.props.notificationHidden[type]){
-                            out = <>{out} <g transform={`translate(${offset+iconsize*3/2},${(-_iconsize)})`}
-                                             fill={highlight(n) ? "black" : "#999"}>
-                                {<RULLwaring type={type} size={_iconsize*2}/>}
-                            </g></>;
-                            offset += _iconsize;
-                        }
-                    });
-                    return out;
-                }
-            }
-            if (this.props.isCircle)
-                return <circle r={5} fill={highlight(n) ? this.state.colors(n.id) : "white"} strokeDasharray={"1 1"} stroke={"black"} strokeWidth={1}></circle>
-            return ''
-        };
         // this.adjustFont();
         return(
             <div style={{position:'relative',overflow:"visible"}}>
-                <svg viewBox={"0 0 "+this.state.opts.width+' '+this.state.opts.height} ref={this.svg} style={{overflow:"visible"}}
+                <svg viewBox={"0 0 "+this.state.width+' '+this.state.height} ref={this.svg} style={{overflow:"visible"}}
                      id={this.props.id}>
                     <g className={"content"}
                        fontFamily={"sans-serif"}
-                       fontSize={12}
-                       transform={`translate(${[this.state.opts.margin.left+this.state.zoomTransform.x,this.state.opts.margin.top+this.state.opts.dx-this.state.opts.x0+this.state.zoomTransform.y]}) scale(${this.state.zoomTransform.k}) `}>
-                        <g className={"links"}
+                       fontSize={this.state.fontSize}
+                       transform={`translate(${[this.state.margin.left + this.state.radius(),this.state.margin.top + this.state.radius()]})`}>
+                        <g className={"axisHolder"}
                            fill={"none"} stroke={'#000'} strokeOpacity={"0.1"} strokeWidth={0.5}>
-                            {this.state.data.links().map(l=>
-                                (l.target.data.value!=='delete')?<path d={treeLink(l)}
-                                                                       fill={'none'}
-                                    // stroke={highlight(l.source) && highlight(l.target) ? this.state.colors(l.target.id) : null}
-                                    // stroke={highlight(l.source) && highlight(l.target) ? '#000' : null}
-                                                                       strokeOpacity={highlight(l.source) && highlight(l.target) ? 0.75 : null}
-                                                                       strokeDasharray={(this.props.mode&&(l.target.data.value==='add'))?'4 2':null}
-                                                                       key={l.source.id+l.target.id}
-                                />:'')}
+                            {this.state.levels.map(l=><circle r={this.state.rScale(l)}></circle>)}
+                            {axis.map((a,i)=><g className={classes.axis} style={{transform:`rotate(${axisAngle(i)}rad)`}}>
+                                <line y2={-this.state.rScale(1)}></line>
+                            </g>)}
+                            {axis.map((a,i)=><Text fill={'#000'} stroke={'unset'} strokeOpacity={"1"} textAnchor="middle"
+                                x={Math.sin(axisAngle(i))*this.state.rScale(1) + (Math.sin(axisAngle(i))    ?((axisAngle(i)>Math.PI)?-(this.state.textWidth/2) :(this.state.textWidth/2)):0) } y={-Math.cos(axisAngle(i))*this.state.rScale(1.1)} style={{fontSize: '1rem'}}
+                                width={this.state.textWidth}>{a.label}</Text>)}
                         </g>
-                        <g className={"nodes"}>{this.state.data.descendants().map(n=>
-                            <g strokeLinejoin="round" strokeWidth="3" transform={`translate(${n.y},${n.x})`} key={n.id}
-                               opacity={highlight(n)?1:0.2}
-                               style={{pointerEvents:n.data.value==='delete'?'none':null}}
-                               onClick={(e) => {this.onSelect(n)}}
-                               onMouseOver={(e)=>{this.setState({mouse:{x:e.nativeEvent.offsetX,y:e.nativeEvent.offsetY,target:n.data.info}});
-                                   this.onMouseOver(n)}}
-                               onMouseLeave={(e)=>{this.setState({mouse:undefined});this.onMouseLeave();}}>
-                                {(this.props.isCircle || (n.parent==null)) ?'':battery_render(n)}
-                                {render(n)}
-                                <text dy="0.31em" fill={highlight(n) ? this.state.colors(n.id) : null} x={(n.children ? -6 : 6)*(1+(+!this.props.isCircle)*1.2)} textAnchor={n.children?"end":"start"} vector-effect="non-scaling-stroke" stroke={"white"} fontSize={this.state.fontSize}>{this.getName(n)}</text>
-                                <text dy="0.31em" fill={highlight(n) ? this.state.colors(n.id) : null} x={(n.children ? -6 : 6)*(1+(+!this.props.isCircle)*1.2)} textAnchor={n.children?"end":"start"} fontSize={this.state.fontSize}>{this.getName(n)}</text>
-                            </g>)}</g>
+                        <g className={"links"}
+                           fill={"none"} strokeOpacity={1} strokeWidth={1}>
+                            {this.state.data.map((d,i)=><path d={this.state.radarLine(d)}  stroke={this.state.colors(i)}/>)}
+                        </g>
                     </g>
                 </svg>
             </div>

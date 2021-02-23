@@ -1,4 +1,4 @@
-import React, {useEffect} from "react";
+import React, {useEffect, useRef} from "react";
 import {
     InputBase,
     Paper,
@@ -15,7 +15,7 @@ import SearchIcon from '@material-ui/icons/Search';
 import Grid from "@material-ui/core/Grid";
 import AddIcon from "@material-ui/icons/Add";
 import Button from "@material-ui/core/Button";
-
+import * as axios from "axios";
 const useStyles = makeStyles((theme) => ({
     root: {
         width: '100%',
@@ -66,16 +66,35 @@ const useStyles = makeStyles((theme) => ({
         },
     }
 }));
-
+const columns = [{
+    id: 'Initials',
+    label: 'Initials',
+    align: 'center',
+},{
+    id: 'Date of Birth',
+    label: 'Date of Birth',
+    align: 'center',
+},{
+    id: 'Gender',
+    label: 'Gender',
+    align: 'center',
+}];
 function ManageUser(props) {
     const classes = useStyles();
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
     const [rows, setRows] = React.useState([]);
-    const [columns, setColumns] = React.useState([]);
-
+    const firstUpdate = useRef(true);
     useEffect(() => {
-        props.onLoad(false);
+        if (firstUpdate.current) {
+            firstUpdate.current = false;
+            axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/list`)
+                .then(r=>{
+                    setRows(r.data)
+                });
+            props.onLoad(false);
+            return;
+        }
     });
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
