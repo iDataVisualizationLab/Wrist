@@ -146,29 +146,25 @@ function WristIndex(props) {
                     ) : (
                         <div>
                             <Typography className={classes.instructions}>{getStepContent(activeStep,props)}</Typography>
-                            <div>
-                                <Button
-                                    disabled={activeStep === 0}
-                                    onClick={handleBack}
-                                    className={classes.backButton}
-                                >
-                                    Back
-                                </Button>
-                                <Button variant="contained" color="primary" onClick={handleNext}>
-                                    {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
-                                </Button>
-                            </div>
                         </div>
                     )}
                 </div>
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleCancel} color="text.secondary">
+                <Button onClick={handleCancel} color="text.secondary" style={{float:'left'}}>
                     Cancel
                 </Button>
-                <Button onClick={handleSubmit} color="primary">
-                    Submit
+                <Button
+                    disabled={activeStep === 0}
+                    onClick={handleBack}
+                    className={classes.backButton}
+                >
+                    Back
                 </Button>
+                {activeStep === steps.length - 1 ?
+                    <Button variant="contained" color="primary" onClick={handleSubmit}>Finish</Button>:
+                    <Button variant="contained" color="primary" onClick={handleNext}>Next</Button>
+                }
             </DialogActions>
         </Dialog>
     );

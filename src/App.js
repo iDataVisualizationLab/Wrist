@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {makeStyles, withStyles, MuiThemeProvider, createMuiTheme, fade} from '@material-ui/core/styles';
 import './App.css';
 import Backdrop from "@material-ui/core/Backdrop";
@@ -14,6 +14,12 @@ import WristIndex from "./components/WristIndex";
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import * as axios from "axios";
 import WristViz from "./components/wristViz";
+import DialogActions from "@material-ui/core/DialogActions";
+import Button from "@material-ui/core/Button";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import Dialog from "@material-ui/core/Dialog";
 
 const THEME = createMuiTheme({
     typography: {
@@ -70,6 +76,19 @@ function App() {
     const newIndexData = React.useRef({});
     const [onNewIndex, setonNewIndex] = React.useState(false);
     const [page, setPage] = React.useState(0);
+    const [reloadUserTable, setreloadUserTable] = React.useState(true);
+    const [patientLists, setPatientLists] = React.useState([]);
+    const [confirmFunc,setConfirmFunc] = React.useState(false);
+
+    useEffect(()=>{
+        if (reloadUserTable){
+            setreloadUserTable(false);
+            axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/list`)
+                .then(r=>{
+                    setPatientLists(r.data)
+                });
+        }
+    })
 
     const onLoad = (d) => {
         if (d === undefined)
@@ -88,7 +107,7 @@ function App() {
         setPage(1);
     };
 
-    const viewPatient = (data)=>{
+    const editPatient = (data)=>{
         const init = data['Initials'];
         const birth = data['Date of Birth'];
         const gender = data['Gender'];
@@ -100,6 +119,42 @@ function App() {
                 setPage(2);
                 setuserInfoView(true);
             });
+    };
+
+    const viewPatient = (data)=>{
+        const init = data['Initials'];
+        const birth = data['Date of Birth'];
+        const gender = data['Gender'];
+        axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?init=${init}&birth=${birth}&gender=${gender}`)
+            .then(r=>{
+                debugger
+                const d= r.data;
+                setuserData(d);
+                setPage(3);
+                setuserInfoView(true);
+            });
+    };
+
+    const deletePatient = (data)=> {
+        setConfirmFunc({
+            title: 'Delete Patient Data',
+            content: 'Delete all record and profile of patient: '+  data['Initials'],
+            func: () => {
+                const init = data['Initials'];
+                const birth = data['Date of Birth'];
+                const gender = data['Gender'];
+                axios.get(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/delete?init=${init}&birth=${birth}&gender=${gender}`)
+                    .then(r => {
+                        setConfirmFunc(false);
+                        setreloadUserTable(true);
+                        setPage(0);
+                    });
+            }
+        })
+    };
+
+    const handleCloseConfirm = () => {
+        setConfirmFunc(false);
     };
 
     const newIndex = (d)=>{
@@ -115,7 +170,7 @@ function App() {
         Object.keys(d).forEach(k=>{
             newIndexData.current[k] = d[k];
         });
-    }
+    };
 
     const handleSubmitNewIndex = ()=>{
         debugger;
@@ -124,7 +179,7 @@ function App() {
         const gender = userData['Gender'];
         axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/record?init=${init}&birth=${birth}&gender=${gender}`,newIndexData.current)
             .then((r)=>{
-                viewPatient(userData);
+                editPatient(userData);
             }).catch(e=>{
             // handle error
         });
@@ -133,7 +188,7 @@ function App() {
     const handleSubmitPatient = (data)=>{
         axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile`,data)
             .then(()=>{
-                viewPatient(data);
+                editPatient(data);
             }).catch(e=>{
                 // handle error
         })
@@ -154,9 +209,20 @@ function App() {
                         <WristViz onLoad={onLoad} data={userData['Wrist Index']}/>
                     </Grid>
                     </>;
+            case 3:
+                return <><Grid item xs={4}>
+                    <UserInfo data={userData} viewMode={userInfoView} userEditMode={!userInfoView} IndexEditMode={false} newIndex={newIndex} />
+                </Grid>
+                    <Grid item xs={6}>
+                        <WristViz onLoad={onLoad} data={userData['Wrist Index']}/>
+                    </Grid>
+                </>;
             default:
                 return <Grid item xs={4}>
-                    <ManageUser viewPatient={viewPatient} onLoad={onLoad} newPatient={newPatient}/>
+                    <ManageUser viewPatient={viewPatient} editPatient={editPatient}
+                                deletePatient={deletePatient}
+                                rows={patientLists}
+                                onLoad={onLoad} newPatient={newPatient}/>
                 </Grid>;
         }
     };
@@ -171,7 +237,7 @@ function App() {
                             color="inherit"
                             aria-label="open drawer"
                         >
-                            {page?<ArrowBackIosIcon onClick={()=>setPage(0)}/>:''}
+                            {page?<ArrowBackIosIcon onClick={()=>{setreloadUserTable(true);setPage(0);}}/>:''}
                         </IconButton>
                         <Typography className={classes.title} variant="h6" noWrap>
                             Wrist Index
@@ -187,6 +253,27 @@ function App() {
             >
                 {renderPage()}
             </Grid>
+            <Dialog
+                open={confirmFunc}
+                onClose={handleCloseConfirm}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">{confirmFunc.title}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        {confirmFunc.content}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseConfirm} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={confirmFunc.func} color="primary" autoFocus>
+                        OK
+                    </Button>
+                </DialogActions>
+            </Dialog>
             <WristIndex func={func} open={onNewIndex} handleCancel={handleCancelNewIndex} getOutputData={getOutputData} handleSubmit={handleSubmitNewIndex}/>
             <Backdrop className={classes.backdrop} open={busy !== false}>
                 <CircularProgress color="secondary"/>

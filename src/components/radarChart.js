@@ -61,7 +61,7 @@ class RadarChart extends React.Component{
             rScale: d3.scaleLinear(),
             radarLine: d3.radialLine()
                 // .interpolate("linear-closed")
-                .curve(d3.curveCardinalClosed)
+                .curve(d3.curveCardinalClosed.tension(0.7))
                 .radius( (d) => {
                         return this.state.rScale(d);
                 })
@@ -113,17 +113,17 @@ class RadarChart extends React.Component{
                        fontSize={this.state.fontSize}
                        transform={`translate(${[this.state.margin.left + this.state.radius(),this.state.margin.top + this.state.radius()]})`}>
                         <g className={"axisHolder"}
-                           fill={"none"} stroke={'#000'} strokeOpacity={"0.1"} strokeWidth={0.5}>
+                           fill={"none"} stroke={'#000'} strokeOpacity={"0.5"} strokeWidth={0.5}>
                             {this.state.levels.map(l=><circle r={this.state.rScale(l)}></circle>)}
                             {axis.map((a,i)=><g className={classes.axis} style={{transform:`rotate(${axisAngle(i)}rad)`}}>
                                 <line y2={-this.state.rScale(1)}></line>
                             </g>)}
-                            {axis.map((a,i)=><Text fill={'#000'} stroke={'unset'} strokeOpacity={"1"} textAnchor="middle"
-                                x={Math.sin(axisAngle(i))*this.state.rScale(1) + (Math.sin(axisAngle(i))    ?((axisAngle(i)>Math.PI)?-(this.state.textWidth/2) :(this.state.textWidth/2)):0) } y={-Math.cos(axisAngle(i))*this.state.rScale(1.1)} style={{fontSize: '1rem'}}
+                            {axis.map((a,i)=><Text fill={'#000'} stroke={'unset'} strokeOpacity={0} textAnchor="middle"
+                                x={Math.sin(axisAngle(i))*this.state.rScale(1) + (Math.sin(axisAngle(i))    ?((axisAngle(i)>Math.PI)?-(this.state.textWidth/2) :(this.state.textWidth/2)):0) } y={-Math.cos(axisAngle(i))*this.state.rScale(1.1)} style={{fontSize: '0.9rem'}}
                                 width={this.state.textWidth}>{a.label}</Text>)}
                         </g>
                         <g className={"links"}
-                           fill={"none"} strokeOpacity={1} strokeWidth={1}>
+                           fill={"none"} strokeOpacity={1} strokeWidth={2}>
                             {this.state.data.map((d,i)=><path d={this.state.radarLine(d)}  stroke={this.state.colors(i)}/>)}
                         </g>
                     </g>

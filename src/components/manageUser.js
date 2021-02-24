@@ -16,6 +16,11 @@ import Grid from "@material-ui/core/Grid";
 import AddIcon from "@material-ui/icons/Add";
 import Button from "@material-ui/core/Button";
 import * as axios from "axios";
+import IconButton from "@material-ui/core/IconButton";
+import EditIcon from '@material-ui/icons/Edit';
+import DeleteIcon from '@material-ui/icons/Delete';
+import VisibilityIcon from '@material-ui/icons/Visibility';
+
 const useStyles = makeStyles((theme) => ({
     root: {
         width: '100%',
@@ -81,17 +86,18 @@ const columns = [{
 }];
 function ManageUser(props) {
     const classes = useStyles();
+    const {rows} = props;
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
-    const [rows, setRows] = React.useState([]);
+    // const [rows, setRows] = React.useState([]);
     const firstUpdate = useRef(true);
     useEffect(() => {
         if (firstUpdate.current) {
             firstUpdate.current = false;
-            axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/list`)
-                .then(r=>{
-                    setRows(r.data)
-                });
+            // axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/list`)
+            //     .then(r=>{
+            //         setRows(r.data)
+            //     });
             props.onLoad(false);
             return;
         }
@@ -151,12 +157,13 @@ function ManageUser(props) {
                                         {column.label}
                                     </TableCell>
                                 ))}
+                                <TableCell></TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
                                 return (
-                                    <TableRow hover role="checkbox" tabIndex={-1} key={row.code} onClick={()=>props.viewPatient(row)}>
+                                    <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
                                         {columns.map((column) => {
                                             const value = row[column.id];
                                             return (
@@ -165,6 +172,17 @@ function ManageUser(props) {
                                                 </TableCell>
                                             );
                                         })}
+                                        <TableCell key='btnCell' align="middle">
+                                            <IconButton aria-label="view"  size="small" onClick={()=>props.viewPatient(row)}>
+                                                <VisibilityIcon fontSize="inherit"/>
+                                            </IconButton>
+                                            <IconButton  aria-label="edit" size="small" onClick={()=>props.editPatient(row)}>
+                                                <EditIcon fontSize="inherit"/>
+                                            </IconButton>
+                                            <IconButton color="secondary" aria-label="delete"  size="small" onClick={()=>props.deletePatient(row)}>
+                                                <DeleteIcon fontSize="inherit"/>
+                                            </IconButton>
+                                        </TableCell>
                                     </TableRow>
                                 );
                             })}
