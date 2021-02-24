@@ -1,22 +1,22 @@
 {
   "files": {
     "main.css": "/Wrist/static/css/main.7d180cbf.chunk.css",
-    "main.js": "/Wrist/static/js/main.d1457a1e.chunk.js",
-    "main.js.map": "/Wrist/static/js/main.d1457a1e.chunk.js.map",
-    "runtime-main.js": "/Wrist/static/js/runtime-main.8ea20e1b.js",
-    "runtime-main.js.map": "/Wrist/static/js/runtime-main.8ea20e1b.js.map",
-    "static/js/2.7d0f5b75.chunk.js": "/Wrist/static/js/2.7d0f5b75.chunk.js",
-    "static/js/2.7d0f5b75.chunk.js.map": "/Wrist/static/js/2.7d0f5b75.chunk.js.map",
-    "static/js/3.44f769cc.chunk.js": "/Wrist/static/js/3.44f769cc.chunk.js",
-    "static/js/3.44f769cc.chunk.js.map": "/Wrist/static/js/3.44f769cc.chunk.js.map",
+    "main.js": "/Wrist/static/js/main.d36754db.chunk.js",
+    "main.js.map": "/Wrist/static/js/main.d36754db.chunk.js.map",
+    "runtime-main.js": "/Wrist/static/js/runtime-main.320a98d6.js",
+    "runtime-main.js.map": "/Wrist/static/js/runtime-main.320a98d6.js.map",
+    "static/js/2.e95c0834.chunk.js": "/Wrist/static/js/2.e95c0834.chunk.js",
+    "static/js/2.e95c0834.chunk.js.map": "/Wrist/static/js/2.e95c0834.chunk.js.map",
+    "static/js/3.cab2cb97.chunk.js": "/Wrist/static/js/3.cab2cb97.chunk.js",
+    "static/js/3.cab2cb97.chunk.js.map": "/Wrist/static/js/3.cab2cb97.chunk.js.map",
     "index.html": "/Wrist/index.html",
     "static/css/main.7d180cbf.chunk.css.map": "/Wrist/static/css/main.7d180cbf.chunk.css.map",
-    "static/js/2.7d0f5b75.chunk.js.LICENSE.txt": "/Wrist/static/js/2.7d0f5b75.chunk.js.LICENSE.txt"
+    "static/js/2.e95c0834.chunk.js.LICENSE.txt": "/Wrist/static/js/2.e95c0834.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
-    "static/js/runtime-main.8ea20e1b.js",
-    "static/js/2.7d0f5b75.chunk.js",
+    "static/js/runtime-main.320a98d6.js",
+    "static/js/2.e95c0834.chunk.js",
     "static/css/main.7d180cbf.chunk.css",
-    "static/js/main.d1457a1e.chunk.js"
+    "static/js/main.d36754db.chunk.js"
   ]
 }
