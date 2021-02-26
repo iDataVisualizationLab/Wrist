@@ -112,23 +112,23 @@ function ManageUser(props) {
     };
     return (
         <>
-            <Grid container alignItems="center" justify="space-between">
+            <Grid container alignItems="center" justify="space-between" style={{marginTop:20}}>
                 <Grid item xs>
-                <Paper className={classes.searchHolder}>
-                    <div className={classes.search}>
-                        <div className={classes.searchIcon}>
-                            <SearchIcon/>
-                        </div>
-                        <InputBase
-                            placeholder="Search…"
-                            classes={{
-                                root: classes.inputRoot,
-                                input: classes.inputInput,
-                            }}
-                            inputProps={{'aria-label': 'search'}}
-                        />
-                    </div>
-                </Paper>
+                {/*<Paper className={classes.searchHolder}>*/}
+                {/*    <div className={classes.search}>*/}
+                {/*        <div className={classes.searchIcon}>*/}
+                {/*            <SearchIcon/>*/}
+                {/*        </div>*/}
+                {/*        <InputBase*/}
+                {/*            placeholder="Search…"*/}
+                {/*            classes={{*/}
+                {/*                root: classes.inputRoot,*/}
+                {/*                input: classes.inputInput,*/}
+                {/*            }}*/}
+                {/*            inputProps={{'aria-label': 'search'}}*/}
+                {/*        />*/}
+                {/*    </div>*/}
+                {/*</Paper>*/}
                 </Grid>
                 <Grid item>
                     <Button
