@@ -40,15 +40,21 @@ function getStepContent(step,props) {
             return <Grid container>
                 <Grid item xs>
                     <TextField type="date"
+                               disabled={props.viewMode}
                                InputLabelProps={{shrink: true}}
                                fullWidth margin="dense"
                                label="Date of Evaluation" name="Date"
+                               required
+                               defaultValue={props.getOutputData("Date")}
                                onChange={event=>props.getOutputData({"Date":event.target.value})} variant="outlined"/>
 
                 </Grid>
                 <Grid item xs>
                     <TextField select
+                               disabled={props.viewMode}
                                fullWidth margin="dense"
+                               required
+                               defaultValue={props.getOutputData("isReturnToWork")}
                                label="Has patient returned to work?" name="isReturnToWork"
                                onChange={event=>props.getOutputData({"isReturnToWork":event.target.value})} variant="outlined">
                         <MenuItem value="Yes">Yes</MenuItem>

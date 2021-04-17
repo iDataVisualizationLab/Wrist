@@ -80,17 +80,31 @@ function ObjectiveMeasurement(props) {
         }
     });
     useEffect(() => {
-        if (props.viewMode) {
-            setData(this.props.data)
+        let willupdate=false;
+        const obj = {...data};
+        Object.keys(data).forEach(k=>{
+            debugger
+            const v = props.getOutputData(k);
+            if ( v){
+                willupdate = true;
+                obj[k] = v;
+            }
+        })
+        if (willupdate) {
+            setData(obj);
+        }else{
+            getOutputData();
         }
-    });
+    },[]);
     const getOutputData = ()=>{
         Object.keys(data).forEach(k=>data[k].result = props.func[k](data[k]['Involved Hand'],data[k]['Contra-lateral Hand']));
         props.getOutputData({...data});
     };
-    const handleChange = (event, mainKey, subKey, index) => {
-        data[mainKey][subKey][index] = event.target.value;
+    const handleChange = (event, mainKey, subKey, index,max) => {
+        data[mainKey][subKey][index] = max?Math.min(max,event.target.value):event.target.value;
+        data[mainKey].result = props.func[mainKey](data[mainKey]['Involved Hand'],data[mainKey]['Contra-lateral Hand']);
         setData({...data});
+        props.getOutputData({...data})
     };
     const getData = (mainKey, subKey, index) => {
         return data[mainKey][subKey][index]
@@ -105,21 +119,24 @@ function ObjectiveMeasurement(props) {
                 <Grid item className={classes.input}>
                     <TextField disabled={props.viewMode} type="number"
                                InputLabelProps={{shrink: true}}
-                               inputProps={{style: { textAlign: 'right'}}}
+                               inputProps={{style: { textAlign: 'right'},max: 110}}
                                margin="dense"
                                size="small"
                                value={getData(d['key'], 'Involved Hand', i)} fullWidth margin="dense"
-                               onChange={(event) => handleChange(event, d['key'], 'Involved Hand', i)}
+                               onChange={(event) => handleChange(event, d['key'], 'Involved Hand', i,110)}
                                variant={styleField}/>
                 </Grid>
                 <Grid item className={classes.input}>
-                    <TextField disabled={props.viewMode} type="number"
+                    <TextField
+                        // disabled={props.viewMode}
+                        disabled={props.first||props.viewMode}
+                               type="number"
                                InputLabelProps={{shrink: true}}
-                               inputProps={{style: { textAlign: 'right'}}}
+                               inputProps={{style: { textAlign: 'right'},max: 110}}
                                margin="dense"
                                size="small"
                                value={getData(d['key'], 'Contra-lateral Hand', i)} fullWidth margin="dense"
-                               onChange={(event) => handleChange(event, d['key'], 'Contra-lateral Hand', i)}
+                               onChange={(event) => handleChange(event, d['key'], 'Contra-lateral Hand', i,110)}
                                variant={styleField}/>
                 </Grid>
             </Grid>)}
@@ -127,14 +144,8 @@ function ObjectiveMeasurement(props) {
                 <Grid item xs>
                     <span>{d['key']}</span>
                 </Grid>
-                {/*<Grid item className={classes.input}>*/}
-                {/*    <span className={classes.func}>{props.func[d['key']](data[d['key']]['Involved Hand'])}</span>*/}
-                {/*</Grid>*/}
-                {/*<Grid item className={classes.input}>*/}
-                {/*    <span className={classes.func}>{props.func[d['key']](data[d['key']]['Contra-lateral Hand'])}</span>*/}
-                {/*</Grid>*/}
                 <Grid item className={classes.input2}>
-                    <span className={classes.func}>{props.func[d['key']](data[d['key']]['Involved Hand'],data[d['key']]['Contra-lateral Hand'])}</span>
+                    <span className={classes.func}>{data[d['key']].result}</span>
                 </Grid>
             </Grid></>)
     };
@@ -155,7 +166,10 @@ function ObjectiveMeasurement(props) {
                                variant={styleField}/>
                 </Grid>
                 <Grid item className={classes.input}>
-                    <TextField disabled={props.viewMode} type="number"
+                    <TextField
+                        // disabled={props.viewMode}
+                        disabled={props.first||props.viewMode}
+                        type="number"
                                InputLabelProps={{shrink: true}}
                                inputProps={{style: { textAlign: 'right'}}}
                                margin="dense"
@@ -170,11 +184,11 @@ function ObjectiveMeasurement(props) {
                     <span>{d['key']}</span>
                 </Grid>
                 <Grid item className={classes.input2}>
-                    <span className={classes.func}>{props.func[d['key']](data[d['key']]['Involved Hand'],data[d['key']]['Contra-lateral Hand'])}</span>
+                    <span className={classes.func}>{data[d['key']].result}</span>
                 </Grid>
             </Grid></>)
     };
-    getOutputData();
+    // getOutputData();
     return (<Grid container spacing={0.5} direction="column"
                   justify="center"
                   alignItems="stretch">

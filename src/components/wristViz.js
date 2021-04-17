@@ -105,7 +105,7 @@ function WristViz(props) {
         <>
             <Grid container alignItems="center" justify="space-between">
                 <Grid item xs>
-                    <RadarChart data={props.data}/>
+                    <RadarChart keyColor={"_id"} colors={props.colors} data={props.data} selectedIndex={props.selectedIndex}/>
                 </Grid>
             </Grid>
             {/*<Paper className={classes.root}>*/}

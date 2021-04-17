@@ -8,7 +8,8 @@ import {AppBar, Toolbar, Typography, IconButton, Container} from "@material-ui/c
 import MenuIcon from '@material-ui/icons/Menu';
 import Grid from "@material-ui/core/Grid";
 import UserInfo from "./components/userInfo";
-import {sum, mean,count} from "d3";
+import {sum, mean, count, schemeCategory10, default as d3} from "d3";
+import { scaleOrdinal } from 'd3-scale';
 import PROMs from "./components/PROMs";
 import WristIndex from "./components/WristIndex";
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
@@ -20,6 +21,9 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import Dialog from "@material-ui/core/Dialog";
+import SignIn from "./components/signIn";
+import GetAppIcon from '@material-ui/icons/GetApp';
+import RadioChoice from "./components/radioChoice";
 
 const THEME = createMuiTheme({
     typography: {
@@ -70,20 +74,25 @@ const func ={
 
 function App() {
     const classes = useStyles();
-    const [busy, setBusy] = React.useState(true);
+    const [masterId, setmasterId] = React.useState();
+    const [busy, setBusy] = React.useState(false);
     const [userData, setuserData] = React.useState({});
-    const [userInfoView, setuserInfoView] = React.useState(false);
+    // const [userInfoView, setuserInfoView] = React.useState(false);
+    const [IndexView, setIndexView] = React.useState(false);
     const newIndexData = React.useRef({});
     const [onNewIndex, setonNewIndex] = React.useState(false);
-    const [page, setPage] = React.useState(0);
+    const [page, setPage] = React.useState(-1);
     const [reloadUserTable, setreloadUserTable] = React.useState(true);
     const [patientLists, setPatientLists] = React.useState([]);
     const [confirmFunc,setConfirmFunc] = React.useState(false);
+    const [selectedIndex,setselectedIndex] = React.useState(undefined);
+    const radarColor = React.useRef(scaleOrdinal().range(schemeCategory10));
+
 
     useEffect(()=>{
         if (reloadUserTable){
             setreloadUserTable(false);
-            axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/list`)
+            axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/list?managerBy=${masterId}`)
                 .then(r=>{
                     setPatientLists(r.data)
                 });
@@ -97,41 +106,46 @@ function App() {
             setBusy(d)
     };
 
-    const onAddNewUser = (d)=>{
-        setuserInfoView(true);
-    };
-
     const newPatient = (d)=>{
         setuserData({});
-        setuserInfoView(false);
+        // setuserInfoView(false);
         setPage(1);
     };
 
     const editPatient = (data)=>{
-        const init = data['Initials'];
-        const birth = data['Date of Birth'];
-        const gender = data['Gender'];
-        axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?init=${init}&birth=${birth}&gender=${gender}`)
+        const id = data['_id'];
+        axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?id=${id}`)
             .then(r=>{
-                debugger
                 const d= r.data;
                 setuserData(d);
+                radarColor.current.domain([]);
                 setPage(2);
-                setuserInfoView(true);
+                // setuserInfoView(true);
             });
     };
 
+    const editIndex = (data)=>{
+        newIndexData.current = data;
+        setIndexView(false);
+        setonNewIndex(true);
+    };
+
+     const viewIndex = (data)=>{
+         newIndexData.current = data;
+         setIndexView(true);
+            setonNewIndex(true);
+        };
+
     const viewPatient = (data)=>{
-        const init = data['Initials'];
-        const birth = data['Date of Birth'];
-        const gender = data['Gender'];
-        axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?init=${init}&birth=${birth}&gender=${gender}`)
+        const id = data['_id'];
+        axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?id=${id}`)
             .then(r=>{
                 debugger
                 const d= r.data;
                 setuserData(d);
+                radarColor.current.domain([]);
                 setPage(3);
-                setuserInfoView(true);
+                // setuserInfoView(true);
             });
     };
 
@@ -140,10 +154,8 @@ function App() {
             title: 'Delete Patient Data',
             content: 'Delete all record and profile of patient: '+  data['Initials'],
             func: () => {
-                const init = data['Initials'];
-                const birth = data['Date of Birth'];
-                const gender = data['Gender'];
-                axios.get(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/delete?init=${init}&birth=${birth}&gender=${gender}`)
+                const id = data['_id'];
+                axios.get(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/delete?id=${id}`)
                     .then(r => {
                         setConfirmFunc(false);
                         setreloadUserTable(true);
@@ -152,14 +164,66 @@ function App() {
             }
         })
     };
+    const deleteIndex = (data)=> {
+            setConfirmFunc({
+                title: 'Delete Record Data',
+                content: 'Delete record : '+  data['Date'],
+                func: () => {
+                    const id = data['_id'];
+                    axios.get(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/record/delete?id=${id}`)
+                        .then(r => {
+                            setConfirmFunc(false);
+                            editPatient({_id:data.caseId});
+                        });
+                }
+            })
+        };
 
     const handleCloseConfirm = () => {
         setConfirmFunc(false);
     };
 
-    const newIndex = (d)=>{
-        newIndexData.current = {};
-        setonNewIndex(true);
+    const newIndex = (firstRecord)=>{
+        if (firstRecord){
+            newIndexData.current={
+                "TAM EX-0-Flex": {
+                    "Involved Hand": [0, 0],
+                    "Contra-lateral Hand": firstRecord["TAM EX-0-Flex"]["Contra-lateral Hand"],
+                    "result":0
+                },
+                "TAM Pro-0-Sup": {
+                    "Involved Hand": [0, 0],
+                    "Contra-lateral Hand": firstRecord["TAM Pro-0-Sup"]["Contra-lateral Hand"],
+                    "result":0
+                },
+                "TAM Rad-0-Ulnar": {
+                    "Involved Hand": [0, 0],
+                    "Contra-lateral Hand": firstRecord["TAM Rad-0-Ulnar"]["Contra-lateral Hand"],
+                    "result":0
+                },
+                "Mean of 3 Trials": {
+                    "Involved Hand": [0, 0, 0],
+                    "Contra-lateral Hand": firstRecord["Mean of 3 Trials"]["Contra-lateral Hand"],
+                    "result":0
+                },
+                "Grip Strength Supination Ratio": {
+                    "Involved Hand": [0],
+                    "Contra-lateral Hand": firstRecord["Grip Strength Supination Ratio"]["Contra-lateral Hand"],
+                    "result":0
+                },
+                "Grip Strength Pronation Ratio": {
+                    "Involved Hand": [0],
+                    "Contra-lateral Hand": firstRecord["Grip Strength Pronation Ratio"]["Contra-lateral Hand"],
+                    "result":0
+                },
+                "Action": firstRecord["Action"]
+            }
+        }else{
+            newIndexData.current = {};
+        }
+        newIndexData.current.caseId = userData['_id'];
+        setIndexView(false);
+        setonNewIndex({firstRecord:firstRecord});
     };
 
     const handleCancelNewIndex = (d)=>{
@@ -167,63 +231,135 @@ function App() {
     };
 
     const getOutputData = (d)=>{
-        Object.keys(d).forEach(k=>{
-            newIndexData.current[k] = d[k];
-        });
+        if (typeof d == 'string'){
+            return newIndexData.current[d]
+        }else
+            Object.keys(d).forEach(k=>{
+                newIndexData.current[k] = d[k];
+            });
     };
 
     const handleSubmitNewIndex = ()=>{
-        debugger;
-        const init = userData['Initials'];
-        const birth = userData['Date of Birth'];
-        const gender = userData['Gender'];
-        axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/record?init=${init}&birth=${birth}&gender=${gender}`,newIndexData.current)
-            .then((r)=>{
-                editPatient(userData);
-            }).catch(e=>{
-            // handle error
-        });
+        if (!IndexView){
+            axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/record`,newIndexData.current)
+                .then((r)=>{
+                    console.log(r);
+                    debugger
+                    if (!userData.prefill){
+                        axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?id=${userData._id}`,
+                            {
+                                prefill:{
+                                    "TAM EX-0-Flex": {
+                                        "Contra-lateral Hand": newIndexData.current["TAM EX-0-Flex"]["Contra-lateral Hand"],
+                                    },
+                                    "TAM Pro-0-Sup": {
+                                        "Contra-lateral Hand": newIndexData.current["TAM Pro-0-Sup"]["Contra-lateral Hand"],
+                                    },
+                                    "TAM Rad-0-Ulnar": {
+                                        "Contra-lateral Hand": newIndexData.current["TAM Rad-0-Ulnar"]["Contra-lateral Hand"],
+                                    },
+                                    "Mean of 3 Trials": {
+                                        "Contra-lateral Hand": newIndexData.current["Mean of 3 Trials"]["Contra-lateral Hand"]
+                                    },
+                                    "Grip Strength Supination Ratio": {
+                                        "Contra-lateral Hand": newIndexData.current["Grip Strength Supination Ratio"]["Contra-lateral Hand"]
+                                    },
+                                    "Grip Strength Pronation Ratio": {
+                                        "Contra-lateral Hand": newIndexData.current["Grip Strength Pronation Ratio"]["Contra-lateral Hand"]
+                                    },
+                                    "Action":newIndexData.current["Action"],
+                                }
+                            })
+                    }
+                    editPatient(userData);
+                }).catch(e=>{
+                    console.log(e)
+                // handle error
+            });
+        }
         setonNewIndex(false);
     };
     const handleSubmitPatient = (data)=>{
-        axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile`,data)
-            .then(()=>{
-                editPatient(data);
+        const sendData = {...data};
+        delete sendData.prefill;
+        delete sendData["Wrist Index"];
+        axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?managerBy=${masterId}`,sendData)
+            .then((respond)=>{
+                editPatient(respond.data);
             }).catch(e=>{
                 // handle error
         })
     };
+    const onMouseOverIndex = (_id)=>{
+        setselectedIndex(_id);
+    }
 
     const renderPage = ()=>{
         switch (page) {
             case 1:
                 return <Grid item xs={4}>
-                    <UserInfo viewMode={userInfoView} handleSubmitPatient={handleSubmitPatient} userEditMode={true} IndexEditMode={true} newIndex={newIndex} />
+                    <UserInfo data={{managerBy:masterId}} viewMode={false} handleSubmitPatient={handleSubmitPatient}
+                              userEditMode={true} IndexEditMode={true} newIndex={newIndex} />
 
                 </Grid>;
             case 2:
                 return <><Grid item xs={4}>
-                    <UserInfo data={userData} viewMode={userInfoView} userEditMode={!userInfoView} IndexEditMode={true} newIndex={newIndex} />
+                    <UserInfo data={userData} viewMode={false} userEditMode={false}
+                              handleSubmitPatient={handleSubmitPatient}
+                              viewIndex={viewIndex}
+                              editIndex={editIndex}
+                              deleteIndex={deleteIndex}
+                              onMouseOver={onMouseOverIndex}
+                              IndexEditMode={true} newIndex={newIndex}
+                              colors={radarColor.current}
+                    />
+                    {/*<UserInfo data={userData} viewMode={userInfoView} userEditMode={true} IndexEditMode={true} newIndex={newIndex} />*/}
                 </Grid>
                     <Grid item xs={6}>
-                        <WristViz onLoad={onLoad} data={userData['Wrist Index']}/>
+                        <WristViz onLoad={onLoad} data={userData['Wrist Index']} selectedIndex={selectedIndex} colors={radarColor.current}/>
                     </Grid>
                     </>;
             case 3:
                 return <><Grid item xs={4}>
-                    <UserInfo data={userData} viewMode={userInfoView} userEditMode={!userInfoView} IndexEditMode={false} newIndex={newIndex} />
+                    <UserInfo data={userData} viewMode={true} userEditMode={false}  onMouseOver={onMouseOverIndex}
+                              colors={radarColor.current} IndexEditMode={false} newIndex={newIndex} />
                 </Grid>
                     <Grid item xs={6}>
-                        <WristViz onLoad={onLoad} data={userData['Wrist Index']}/>
+                        <WristViz onLoad={onLoad} data={userData['Wrist Index']} selectedIndex={selectedIndex} colors={radarColor.current}/>
                     </Grid>
                 </>;
-            default:
+            case 0:
                 return <Grid item xs={4}>
+                    <Grid item xs={12} style={{paddingTop:10}}>
+                        <span>Download </span>
+                        <Button
+                            variant="contained"
+                            color="secondary"
+                            size="small"
+                            className={classes.AddButton}
+                            startIcon={<GetAppIcon />}
+                            download
+                            href={`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/download/usermanual`}
+                            >User Manual</Button>
+                        <Button
+                            variant="contained"
+                            color="secondary"
+                            size="small"
+                            className={classes.AddButton}
+                            startIcon={<GetAppIcon />}
+                            download
+                            href={`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/download/wristEn`}
+                        >Wrist Index Form</Button>
+                    </Grid>
                     <ManageUser viewPatient={viewPatient} editPatient={editPatient}
                                 deletePatient={deletePatient}
                                 rows={patientLists}
                                 onLoad={onLoad} newPatient={newPatient}/>
                 </Grid>;
+            default:
+                return <Grid item xs={12} lg={4}>
+                    <SignIn onSucess={(masterId)=>{setmasterId(masterId._id);setreloadUserTable(true); setPage(0)}}/>
+                </Grid>
         }
     };
 
@@ -237,7 +373,7 @@ function App() {
                             color="inherit"
                             aria-label="open drawer"
                         >
-                            {page?<ArrowBackIosIcon onClick={()=>{setreloadUserTable(true);setPage(0);}}/>:''}
+                            {(page>0)?<ArrowBackIosIcon onClick={()=>{setreloadUserTable(true);setPage(0);}}/>:''}
                         </IconButton>
                         <Typography className={classes.title} variant="h6" noWrap>
                             Wrist Index
@@ -274,7 +410,7 @@ function App() {
                     </Button>
                 </DialogActions>
             </Dialog>
-            <WristIndex func={func} open={onNewIndex} handleCancel={handleCancelNewIndex} getOutputData={getOutputData} handleSubmit={handleSubmitNewIndex}/>
+            {onNewIndex?<WristIndex func={func} open={onNewIndex} first={onNewIndex.firstRecord} viewMode={IndexView} handleCancel={handleCancelNewIndex} getOutputData={getOutputData} handleSubmit={handleSubmitNewIndex}/>:''}
             <Backdrop className={classes.backdrop} open={busy !== false}>
                 <CircularProgress color="secondary"/>
                 <span>{(busy || {text: ''}).text}</span>

@@ -24,8 +24,8 @@ function RadioChoice(props){
     return(<div className={classes.root}>
         <Rating
             name="hover-feedback"
-            value={value}
             {...props}
+            value={value}
             size={props.max>5?"small":"medium"}
             onChange={(event, newValue) => {
                 if (props.handeData){
