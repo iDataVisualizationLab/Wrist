@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/Wrist/static/css/main.7d180cbf.chunk.css",
-    "main.js": "/Wrist/static/js/main.62fea854.chunk.js",
-    "main.js.map": "/Wrist/static/js/main.62fea854.chunk.js.map",
+    "main.js": "/Wrist/static/js/main.16f8cbed.chunk.js",
+    "main.js.map": "/Wrist/static/js/main.16f8cbed.chunk.js.map",
     "runtime-main.js": "/Wrist/static/js/runtime-main.10b227c9.js",
     "runtime-main.js.map": "/Wrist/static/js/runtime-main.10b227c9.js.map",
     "static/js/2.e3e0a743.chunk.js": "/Wrist/static/js/2.e3e0a743.chunk.js",
@@ -12,12 +12,12 @@
     "index.html": "/Wrist/index.html",
     "static/css/main.7d180cbf.chunk.css.map": "/Wrist/static/css/main.7d180cbf.chunk.css.map",
     "static/js/2.e3e0a743.chunk.js.LICENSE.txt": "/Wrist/static/js/2.e3e0a743.chunk.js.LICENSE.txt",
-    "static/media/notfound.f3a3f943.png": "/Wrist/static/media/notfound.f3a3f943.png"
+    "static/media/notfound.d6f4bbb5.png": "/Wrist/static/media/notfound.d6f4bbb5.png"
   },
   "entrypoints": [
     "static/js/runtime-main.10b227c9.js",
     "static/js/2.e3e0a743.chunk.js",
     "static/css/main.7d180cbf.chunk.css",
-    "static/js/main.62fea854.chunk.js"
+    "static/js/main.16f8cbed.chunk.js"
   ]
 }
