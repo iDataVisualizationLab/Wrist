@@ -20,6 +20,13 @@ import IconButton from "@material-ui/core/IconButton";
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import VisibilityIcon from '@material-ui/icons/Visibility';
+import ShareIcon from '@material-ui/icons/Share';
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import DialogActions from "@material-ui/core/DialogActions";
+import Dialog from "@material-ui/core/Dialog";
+import TextField from "@material-ui/core/TextField";
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -88,9 +95,12 @@ function ManageUser(props) {
     const classes = useStyles();
     const {rows} = props;
     const [page, setPage] = React.useState(0);
+    const [sharePatient, setSharePatient] = React.useState(undefined);
+    const [copySuccess, setcopySuccess] = React.useState('');
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
     // const [rows, setRows] = React.useState([]);
     const firstUpdate = useRef(true);
+    const shareURL = useRef(null);
     useEffect(() => {
         if (firstUpdate.current) {
             firstUpdate.current = false;
@@ -109,6 +119,13 @@ function ManageUser(props) {
     const handleChangeRowsPerPage = (event) => {
         setRowsPerPage(+event.target.value);
         setPage(0);
+    };
+    const copyToClipboard = (e) => {
+        debugger
+        shareURL.current.select();
+        document.execCommand('copy');
+        e.target.focus();
+        setcopySuccess('Copied!');
     };
     return (
         <>
@@ -173,6 +190,9 @@ function ManageUser(props) {
                                             );
                                         })}
                                         <TableCell key='btnCell' align="middle">
+                                            <IconButton aria-label="share"  size="small" onClick={()=>setSharePatient(row)}>
+                                                <ShareIcon fontSize="inherit"/>
+                                            </IconButton>
                                             <IconButton aria-label="view"  size="small" onClick={()=>props.viewPatient(row)}>
                                                 <VisibilityIcon fontSize="inherit"/>
                                             </IconButton>
@@ -199,6 +219,41 @@ function ManageUser(props) {
                     onChangeRowsPerPage={handleChangeRowsPerPage}
                 />
             </Paper>
+            <Dialog
+                open={sharePatient}
+                onClose={()=>{setSharePatient(undefined);setcopySuccess('')}}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">Share Patient's Profile</DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        <form>
+                          <TextField
+                              inputRef={shareURL}
+                              value={sharePatient?`${window.location.origin.toString()}/view/${sharePatient._id}`:''}
+                          />
+                        </form>
+                        {
+                            /* Logical shortcut for only displaying the
+                               button if the copy command exists */
+                            document.queryCommandSupported('copy') &&
+                            <div>
+                                <Button onClick={copyToClipboard}>Copy</Button>
+                                {copySuccess}
+                            </div>
+                        }
+                    </DialogContentText>
+                </DialogContent>
+                {/*<DialogActions>*/}
+                {/*    <Button onClick={handleCloseConfirm} color="primary">*/}
+                {/*        Cancel*/}
+                {/*    </Button>*/}
+                {/*    <Button onClick={confirmFunc.func} color="primary" autoFocus>*/}
+                {/*        OK*/}
+                {/*    </Button>*/}
+                {/*</DialogActions>*/}
+            </Dialog>
         </>
     );
 }

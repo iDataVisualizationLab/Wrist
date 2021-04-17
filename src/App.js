@@ -24,6 +24,8 @@ import Dialog from "@material-ui/core/Dialog";
 import SignIn from "./components/signIn";
 import GetAppIcon from '@material-ui/icons/GetApp';
 import RadioChoice from "./components/radioChoice";
+import {BrowserRouter as Router, Route, Switch, useRouteMatch} from "react-router-dom";
+import View from "./components/view";
 
 const THEME = createMuiTheme({
     typography: {
@@ -381,14 +383,25 @@ function App() {
                     </Toolbar>
                 </AppBar>
             </div>
-            <Grid
-                container
-                direction="row"
-                justify="center"
-                alignItems="flex-start"
-            >
-                {renderPage()}
-            </Grid>
+            <Router>
+                <Switch>
+                    <Route path="/view">
+                        <View
+                        onLoad={onLoad}/>
+                    </Route>
+                    <Route path="/">
+                        <Grid
+                            container
+                            direction="row"
+                            justify="center"
+                            alignItems="flex-start"
+                        >
+                            {renderPage()}
+                        </Grid>
+                    </Route>
+                </Switch>
+            </Router>
+
             <Dialog
                 open={confirmFunc}
                 onClose={handleCloseConfirm}
