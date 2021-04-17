@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/Wrist/static/css/main.7d180cbf.chunk.css",
-    "main.js": "/Wrist/static/js/main.17d0071c.chunk.js",
-    "main.js.map": "/Wrist/static/js/main.17d0071c.chunk.js.map",
+    "main.js": "/Wrist/static/js/main.7cc2e717.chunk.js",
+    "main.js.map": "/Wrist/static/js/main.7cc2e717.chunk.js.map",
     "runtime-main.js": "/Wrist/static/js/runtime-main.10b227c9.js",
     "runtime-main.js.map": "/Wrist/static/js/runtime-main.10b227c9.js.map",
     "static/js/2.258317a9.chunk.js": "/Wrist/static/js/2.258317a9.chunk.js",
@@ -18,6 +18,6 @@
     "static/js/runtime-main.10b227c9.js",
     "static/js/2.258317a9.chunk.js",
     "static/css/main.7d180cbf.chunk.css",
-    "static/js/main.17d0071c.chunk.js"
+    "static/js/main.7cc2e717.chunk.js"
   ]
 }
