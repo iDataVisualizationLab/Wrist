@@ -231,7 +231,7 @@ function ManageUser(props) {
                         <form>
                           <TextField
                               inputRef={shareURL}
-                              value={sharePatient?`${window.location.origin.toString()}/view/${sharePatient._id}`:''}
+                              value={sharePatient?`${window.location.origin.toString()}/Wrist/view/${sharePatient._id}`:''}
                           />
                         </form>
                         {

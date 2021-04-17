@@ -385,6 +385,10 @@ function App() {
             </div>
             <Router>
                 <Switch>
+                    <Route path="/Wrist/view">
+                        <View
+                            onLoad={onLoad}/>
+                    </Route>
                     <Route path="/view">
                         <View
                         onLoad={onLoad}/>
