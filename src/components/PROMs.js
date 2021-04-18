@@ -257,7 +257,7 @@ function PROMs(props) {
                     .map((d, i) => <Grid item xs container direction="row" spacing="1" alignItems="center">
                             <Grid item xs={8}>{d}</Grid>
                             <Grid item xs={4}>
-                                <RadioChoice max={5} value={MHQ[i]} precision={1} name={"MHQ" + i}
+                                <RadioChoice min={1} max={5} value={MHQ[i]} precision={1} name={"MHQ" + i}
                                              handeData={function (val) {
                                                  handleMHQ(val, i)
                                              }} disabled={props.viewMode}/>

@@ -1,15 +1,5 @@
 import React, {useEffect, useRef} from "react";
-import {
-    InputBase,
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TablePagination,
-    TableRow
-} from "@material-ui/core";
+
 import {fade, makeStyles} from '@material-ui/core/styles';
 import SearchIcon from '@material-ui/icons/Search';
 import Grid from "@material-ui/core/Grid";
@@ -67,24 +57,17 @@ const useStyles = makeStyles((theme) => ({
         },
     }
 }));
-const columns = [{
-    id: 'Initials',
-    label: 'Initials',
-    align: 'center',
-},{
-    id: 'Date of Birth',
-    label: 'Date of Birth',
-    align: 'center',
-},{
-    id: 'Gender',
-    label: 'Gender',
-    align: 'center',
-}];
+function usePrevious(value) {
+    const ref = useRef();
+    useEffect(() => {
+        ref.current = value;
+    });
+    return ref.current;
+}
 function WristViz(props) {
     const classes = useStyles();
-    const [page, setPage] = React.useState(0);
-    const [rowsPerPage, setRowsPerPage] = React.useState(10);
-    const [rows, setRows] = React.useState([]);
+    const [data, setData] = React.useState([]);
+    const prevData = usePrevious(props.data);
     const firstUpdate = useRef(true);
     useEffect(() => {
         if (firstUpdate.current) {
@@ -93,14 +76,6 @@ function WristViz(props) {
             return;
         }
     });
-    const handleChangePage = (event, newPage) => {
-        setPage(newPage);
-    };
-
-    const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(+event.target.value);
-        setPage(0);
-    };
     return (
         <>
             <Grid container alignItems="center" justify="space-between">
@@ -108,50 +83,6 @@ function WristViz(props) {
                     <RadarChart keyColor={"_id"} colors={props.colors} data={props.data} selectedIndex={props.selectedIndex}/>
                 </Grid>
             </Grid>
-            {/*<Paper className={classes.root}>*/}
-            {/*    <TableContainer className={classes.container}>*/}
-            {/*        <Table stickyHeader aria-label="sticky table">*/}
-            {/*            <TableHead>*/}
-            {/*                <TableRow>*/}
-            {/*                    {columns.map((column) => (*/}
-            {/*                        <TableCell*/}
-            {/*                            key={column.id}*/}
-            {/*                            align={column.align}*/}
-            {/*                            style={{minWidth: column.minWidth}}*/}
-            {/*                        >*/}
-            {/*                            {column.label}*/}
-            {/*                        </TableCell>*/}
-            {/*                    ))}*/}
-            {/*                </TableRow>*/}
-            {/*            </TableHead>*/}
-            {/*            <TableBody>*/}
-            {/*                {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {*/}
-            {/*                    return (*/}
-            {/*                        <TableRow hover role="checkbox" tabIndex={-1} key={row.code} onClick={()=>props.viewPatient(row)}>*/}
-            {/*                            {columns.map((column) => {*/}
-            {/*                                const value = row[column.id];*/}
-            {/*                                return (*/}
-            {/*                                    <TableCell key={column.id} align={column.align}>*/}
-            {/*                                        {column.format && typeof value === 'number' ? column.format(value) : value}*/}
-            {/*                                    </TableCell>*/}
-            {/*                                );*/}
-            {/*                            })}*/}
-            {/*                        </TableRow>*/}
-            {/*                    );*/}
-            {/*                })}*/}
-            {/*            </TableBody>*/}
-            {/*        </Table>*/}
-            {/*    </TableContainer>*/}
-            {/*    <TablePagination*/}
-            {/*        rowsPerPageOptions={[10, 25, 100]}*/}
-            {/*        component="div"*/}
-            {/*        count={rows.length}*/}
-            {/*        rowsPerPage={rowsPerPage}*/}
-            {/*        page={page}*/}
-            {/*        onChangePage={handleChangePage}*/}
-            {/*        onChangeRowsPerPage={handleChangeRowsPerPage}*/}
-            {/*    />*/}
-            {/*</Paper>*/}
         </>
     );
 }

@@ -24,7 +24,7 @@ import Dialog from "@material-ui/core/Dialog";
 import SignIn from "./components/signIn";
 import GetAppIcon from '@material-ui/icons/GetApp';
 import RadioChoice from "./components/radioChoice";
-import {BrowserRouter as Router, Route, Switch, useRouteMatch} from "react-router-dom";
+import {BrowserRouter as Router, Link, Route, Switch, useRouteMatch} from "react-router-dom";
 import View from "./components/view";
 
 const THEME = createMuiTheme({
@@ -113,12 +113,34 @@ function App() {
         // setuserInfoView(false);
         setPage(1);
     };
+    const getData = (id)=>{
+        return  axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?id=${id}`)
+            .then(r=>{
+                const _data = r.data;
+                // recalculate
+                if (_data["Wrist Index"]){
+                    _data["Wrist Index"].forEach(d=>{
+                        ["TAM EX-0-Flex", "TAM Pro-0-Sup", "TAM Rad-0-Ulnar", "Mean of 3 Trials", "Grip Strength Supination Ratio", "Grip Strength Pronation Ratio"].forEach(k=>d[k].result = func[k](d[k]['Involved Hand'],d[k]['Contra-lateral Hand']));
 
+                        d['PSFS score'] = func['PSFS score'](d.PSFS);
+                        d['PRWE Pain Scale'] = func['PRWE Pain Scale'](d.PRWE);
+                        d['PRWE Function subscale'] = func['PRWE Function subscale'](d.PRWE);
+                        d['SANE score'] = func['SANE score'](d.PRWE);
+                        d['MHQ score'] = func['MHQ score'](d.MHQ);
+
+                        d['Wrist range motion Flexion/Extension'] = d["TAM EX-0-Flex"].result*100;
+                        d['Wrist range motion Pronation/Supination'] = d["TAM Pro-0-Sup"].result*100;
+                        d['Wrist range motion Radial / Ulnar Deviation'] = d["TAM Rad-0-Ulnar"].result*100;
+                        d['Grip Strength Ratio'] = d["Mean of 3 Trials"].result*100;
+                    })
+                }
+                return _data;
+            })
+    }
     const editPatient = (data)=>{
         const id = data['_id'];
-        axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?id=${id}`)
-            .then(r=>{
-                const d= r.data;
+        getData(id)
+            .then(d=>{
                 setuserData(d);
                 radarColor.current.domain([]);
                 setPage(2);
@@ -140,14 +162,11 @@ function App() {
 
     const viewPatient = (data)=>{
         const id = data['_id'];
-        axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?id=${id}`)
-            .then(r=>{
-                debugger
-                const d= r.data;
+        getData(id)
+            .then(d=>{
                 setuserData(d);
                 radarColor.current.domain([]);
                 setPage(3);
-                // setuserInfoView(true);
             });
     };
 
@@ -185,7 +204,7 @@ function App() {
         setConfirmFunc(false);
     };
 
-    const newIndex = (firstRecord)=>{
+    const newIndex = (firstRecord,history)=>{
         if (firstRecord){
             newIndexData.current={
                 "TAM EX-0-Flex": {
@@ -218,7 +237,12 @@ function App() {
                     "Contra-lateral Hand": firstRecord["Grip Strength Pronation Ratio"]["Contra-lateral Hand"],
                     "result":0
                 },
+                "PSFS": firstRecord["PSFS"],
                 "Action": firstRecord["Action"]
+            }
+            if (history&&history.length){
+                if (history[0].PRWE)
+                    newIndexData.current.PRWE = history[0].PRWE.map((d,i)=>mean(history.map(d=>d.PRWE),e=>e[i])??null)
             }
         }else{
             newIndexData.current = {};
@@ -245,9 +269,7 @@ function App() {
         if (!IndexView){
             axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/record`,newIndexData.current)
                 .then((r)=>{
-                    console.log(r);
-                    debugger
-                    if (!userData.prefill){
+                    // if (!userData.prefill){
                         axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?id=${userData._id}`,
                             {
                                 prefill:{
@@ -269,10 +291,12 @@ function App() {
                                     "Grip Strength Pronation Ratio": {
                                         "Contra-lateral Hand": newIndexData.current["Grip Strength Pronation Ratio"]["Contra-lateral Hand"]
                                     },
+                                    "PSFS": newIndexData.current["PSFS"]
+                                    ,
                                     "Action":newIndexData.current["Action"],
                                 }
                             })
-                    }
+                    // }
                     editPatient(userData);
                 }).catch(e=>{
                     console.log(e)
@@ -299,13 +323,13 @@ function App() {
     const renderPage = ()=>{
         switch (page) {
             case 1:
-                return <Grid item xs={4}>
+                return <Grid item xs={5}>
                     <UserInfo data={{managerBy:masterId}} viewMode={false} handleSubmitPatient={handleSubmitPatient}
                               userEditMode={true} IndexEditMode={true} newIndex={newIndex} />
 
                 </Grid>;
             case 2:
-                return <><Grid item xs={4}>
+                return <><Grid item xs={12}>
                     <UserInfo data={userData} viewMode={false} userEditMode={false}
                               handleSubmitPatient={handleSubmitPatient}
                               viewIndex={viewIndex}
@@ -314,35 +338,43 @@ function App() {
                               onMouseOver={onMouseOverIndex}
                               IndexEditMode={true} newIndex={newIndex}
                               colors={radarColor.current}
+                              func={func} onLoad={onLoad}
+                              selectedIndex={selectedIndex}
                     />
                     {/*<UserInfo data={userData} viewMode={userInfoView} userEditMode={true} IndexEditMode={true} newIndex={newIndex} />*/}
                 </Grid>
-                    <Grid item xs={6}>
-                        <WristViz onLoad={onLoad} data={userData['Wrist Index']} selectedIndex={selectedIndex} colors={radarColor.current}/>
-                    </Grid>
+                    {/*<Grid item xs={7}>*/}
+                    {/*    <WristViz func={func} onLoad={onLoad} data={userData['Wrist Index']} selectedIndex={selectedIndex} colors={radarColor.current}/>*/}
+                    {/*</Grid>*/}
                     </>;
             case 3:
-                return <><Grid item xs={4}>
+                return <><Grid item xs={12}>
                     <UserInfo data={userData} viewMode={true} userEditMode={false}  onMouseOver={onMouseOverIndex}
-                              colors={radarColor.current} IndexEditMode={false} newIndex={newIndex} />
+                              colors={radarColor.current} IndexEditMode={false} newIndex={newIndex}
+                              func={func} onLoad={onLoad}
+                              viewIndex={viewIndex}
+                              selectedIndex={selectedIndex}/>
                 </Grid>
-                    <Grid item xs={6}>
-                        <WristViz onLoad={onLoad} data={userData['Wrist Index']} selectedIndex={selectedIndex} colors={radarColor.current}/>
-                    </Grid>
+                    {/*<Grid item xs={7}>*/}
+                    {/*    <WristViz func={func} onLoad={onLoad} data={userData['Wrist Index']} selectedIndex={selectedIndex} colors={radarColor.current}/>*/}
+                    {/*</Grid>*/}
                 </>;
             case 0:
-                return <Grid item xs={4}>
-                    <Grid item xs={12} style={{paddingTop:10}}>
-                        <span>Download </span>
-                        <Button
-                            variant="contained"
-                            color="secondary"
-                            size="small"
-                            className={classes.AddButton}
-                            startIcon={<GetAppIcon />}
-                            download
-                            href={`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/download/usermanual`}
-                            >User Manual</Button>
+                return <Container maxWidth="sm">
+                    <Grid item container xs={12} style={{paddingTop:10}} spacing={1} alignItems={"center"}>
+                        <Grid item> Download </Grid>
+                        <Grid item>
+                            <Button
+                                variant="contained"
+                                color="secondary"
+                                size="small"
+                                className={classes.AddButton}
+                                startIcon={<GetAppIcon />}
+                                download
+                                href={`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/download/usermanual`}
+                                >User Manual</Button>
+                        </Grid>
+                        <Grid item>
                         <Button
                             variant="contained"
                             color="secondary"
@@ -352,12 +384,13 @@ function App() {
                             download
                             href={`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/download/wristEn`}
                         >Wrist Index Form</Button>
+                        </Grid>
                     </Grid>
                     <ManageUser viewPatient={viewPatient} editPatient={editPatient}
                                 deletePatient={deletePatient}
                                 rows={patientLists}
                                 onLoad={onLoad} newPatient={newPatient}/>
-                </Grid>;
+                </Container>;
             default:
                 return <Grid item xs={12} lg={4}>
                     <SignIn onSucess={(masterId)=>{setmasterId(masterId._id);setreloadUserTable(true); setPage(0)}}/>
@@ -377,18 +410,19 @@ function App() {
                         >
                             {(page>0)?<ArrowBackIosIcon onClick={()=>{setreloadUserTable(true);setPage(0);}}/>:''}
                         </IconButton>
-                        <Typography className={classes.title} variant="h6" noWrap>
-                            Wrist Index
-                        </Typography>
+                        <Link to="/" style={{color: 'inherit', /* blue colors for links too */
+                            textDecoration: 'inherit' /* no underline */}}>
+                            <Button color="inherit">
+                            <Typography className={classes.title} variant="h6" noWrap>
+                                Wrist Index
+                            </Typography>
+                            </Button>
+                        </Link>
                     </Toolbar>
                 </AppBar>
             </div>
-            <Router>
+            {/*<Router>*/}
                 <Switch>
-                    <Route path="/Wrist/view">
-                        <View
-                            onLoad={onLoad}/>
-                    </Route>
                     <Route path="/view">
                         <View
                         onLoad={onLoad}/>
@@ -404,7 +438,7 @@ function App() {
                         </Grid>
                     </Route>
                 </Switch>
-            </Router>
+            {/*</Router>*/}
 
             <Dialog
                 open={confirmFunc}

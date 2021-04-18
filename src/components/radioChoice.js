@@ -19,17 +19,27 @@ function RadioChoice(props){
     const [hover, setHover] = React.useState(-1);
     const classes = useStyles();
     useEffect(()=>{
-        setValue(props.value);
+        setValue(scaleValRevert(props.value));
     });
+    const getmax = ()=>{
+        return props.max-(props.min??0)+1;
+    }
+    const scaleVal = (v)=>{
+        return v+(props.min??0)-1;
+    }
+    const scaleValRevert = (v)=>{
+        return v-(props.min??0)+1;
+    }
     return(<div className={classes.root}>
         <Rating
             name="hover-feedback"
             {...props}
+            max={getmax()}
             value={value}
-            size={props.max>5?"small":"medium"}
+            size={getmax()>5?"small":"medium"}
             onChange={(event, newValue) => {
                 if (props.handeData){
-                    props.handeData(newValue);
+                    props.handeData(newValue===null?null:scaleVal(newValue));
                 }else{
                     setValue(newValue);
                 }
@@ -38,7 +48,7 @@ function RadioChoice(props){
                 setHover(newHover);
             }}
         />
-        {value !== null && <Box ml={2}>{props.labels?props.labels[hover !== -1 ? hover : value]:(hover !== -1 ? hover : value)}</Box>}
+        {value !== null && <Box ml={2}>{props.labels?scaleVal(props.labels[hover !== -1 ? hover : value]):scaleVal(hover !== -1 ? hover : value)}</Box>}
     </div>)
 }
 export default RadioChoice;

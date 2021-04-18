@@ -30,28 +30,28 @@ const axis = [
     {id: 'SANE score', label: 'SANE  rate injured body part on a scale of 0-100?/ 100= normal', range: [0, 100]},
     {
         id: 'MHQ score',
-        label: 'MHQ work module (1-100 / 1=always, 2=often, 3=sometimes, 4=rarely, 5=never)',
+        label: 'MHQ work module (1-5 / 1=always, 2=often, 3=sometimes, 4=rarely, 5=never)',
         range: [1, 100]
     },
     {
-        id: 'TAM EX-0-Flex',
+        id: 'Wrist range motion Flexion/Extension',
         label: 'Wrist range motion Flexion/Extension (0= no ROM- 100% equal or better than contra-lateral  wrist )',
-        range: [0, 1]
+        range: [0, 100]
     },
     {
-        id: 'TAM Pro-0-Sup',
+        id: 'Wrist range motion Pronation/Supination',
         label: 'Wrist range motion Pronation/Supination  (0= no ROM- 100% equal or better than contra-lateral wrist )',
-        range: [0, 1]
+        range: [0, 100]
     },
     {
-        id: 'TAM Rad-0-Ulnar',
+        id: 'Wrist range motion Radial / Ulnar Deviation',
         label: 'Wrist range motion Radial / Ulnar Deviation (0= no ROM- 100% equal or better than contra-lateral wrist )',
-        range: [0, 1]
+        range: [0, 100]
     },
     {
-        id: 'Mean of 3 Trials',
+        id: 'Grip Strength Ratio',
         label: 'Grip Strength Ratio  (0= no  grip strength - 100% equal or better than  contra-lateral wrist )',
-        range: [0, 1]
+        range: [0, 100]
     },
     {
         id: 'Grip Strength Supination Ratio',
@@ -75,9 +75,9 @@ class RadarChart extends React.Component {
         this.state = {
             // labels: [],
             data: [],
-            margin: {top: 200, right: 200, bottom: 200, left: 200},
+            margin: {top: 100, right: 200, bottom: 100, left: 200},
             width: 800,
-            height: 800,
+            height: 700,
             textWidth: 200,
             widthG: function () {
                 return this.width - this.margin.left - this.margin.right
@@ -164,7 +164,9 @@ class RadarChart extends React.Component {
         // this.adjustFont();
         return (
             <div style={{position: 'relative', overflow: "visible"}}>
-                <svg viewBox={"0 0 " + this.state.width + ' ' + this.state.height} ref={this.svg}
+                <svg viewBox={"0 0 " + this.state.width + ' ' + this.state.height}
+                     preserveAspectRatio="xMidYMid meet"
+                     ref={this.svg}
                      style={{overflow: "visible"}}
                      id={this.props.id}>
                     <g className={"content"}
@@ -211,7 +213,7 @@ class RadarChart extends React.Component {
                             fillOpacity={0.3}></rect>)}
                             <text dy={-this.state.legendH/2-2} alignmentBaseline="middle" x={(this.state.levels.length/2) * this.state.legendW} textAnchor={"middle"} fontSize={this.state.fontSize+8}>Well-being of the patient</text>
                             <text dy={this.state.legendH/2} alignmentBaseline="middle" dx={this.state.legendW/2} x={(this.state.levels.length -1) * this.state.legendW} textAnchor={"middle"}>Good</text>
-                            <text dy={this.state.legendH/2} alignmentBaseline="middle" dx={this.state.legendW/2}  textAnchor={"middle"}>Bad</text>
+                            <text dy={this.state.legendH/2} alignmentBaseline="middle" dx={this.state.legendW/2}  textAnchor={"middle"}>Poor</text>
                     </g>
                 </svg>
             </div>

@@ -5,7 +5,7 @@ import Grid from "@material-ui/core/Grid";
 import UserInfo from "./userInfo";
 import WristViz from "./wristViz";
 import {
-    useParams,Switch,Route,useRouteMatch
+    useParams,Switch,Route,useRouteMatch,Link
 } from "react-router-dom";
 import { scaleOrdinal } from 'd3-scale';
 import notfound from '../image/notfound.png'
@@ -38,7 +38,9 @@ function View(props) {
                         <h1>Invalid link</h1>
                     </Grid>
                     <Grid item>
-                    <Button variant="contained" color="primary" startIcon={<HomeIcon/>} href={"/"}>Return home</Button>
+                        <Link to="/">
+                    <Button variant="contained" color="primary" startIcon={<HomeIcon/>}>Return home</Button>
+                        </Link>
                     </Grid>
                 </Grid>
             </Container>
