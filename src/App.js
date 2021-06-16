@@ -84,7 +84,7 @@ function App() {
     const newIndexData = React.useRef({});
     const [onNewIndex, setonNewIndex] = React.useState(false);
     const [page, setPage] = React.useState(-1);
-    const [reloadUserTable, setreloadUserTable] = React.useState(true);
+    const [reloadUserTable, setreloadUserTable] = React.useState(masterId?true:false);
     const [patientLists, setPatientLists] = React.useState([]);
     const [confirmFunc,setConfirmFunc] = React.useState(false);
     const [selectedIndex,setselectedIndex] = React.useState(undefined);
@@ -94,7 +94,12 @@ function App() {
     useEffect(()=>{
         if (reloadUserTable){
             setreloadUserTable(false);
-            axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/list?managerBy=${masterId}`)
+            axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/list?managerBy=${masterId.id}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${masterId.jwtToken}`
+                    }
+                })
                 .then(r=>{
                     setPatientLists(r.data)
                 });
@@ -114,13 +119,23 @@ function App() {
         setPage(1);
     };
     const getData = (id)=>{
-        return  axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?id=${id}`)
+        return  axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/${id}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${masterId.jwtToken}`
+                }
+            })
             .then(r=>{
                 const _data = r.data;
                 // recalculate
                 if (_data["Wrist Index"]){
                     _data["Wrist Index"].forEach(d=>{
-                        ["TAM EX-0-Flex", "TAM Pro-0-Sup", "TAM Rad-0-Ulnar", "Mean of 3 Trials", "Grip Strength Supination Ratio", "Grip Strength Pronation Ratio"].forEach(k=>d[k].result = func[k](d[k]['Involved Hand'],d[k]['Contra-lateral Hand']));
+                        console.log(d);
+
+
+                        ["TAM EX-0-Flex", "TAM Pro-0-Sup", "TAM Rad-0-Ulnar", "Mean of 3 Trials", "Grip Strength Supination Ratio", "Grip Strength Pronation Ratio"].forEach(k=>{
+                            d[k].result = func[k](d[k]['Involved Hand'],d[k]['Contra-lateral Hand'])
+                        });
 
                         d['PSFS score'] = func['PSFS score'](d.PSFS);
                         d['PRWE Pain Scale'] = func['PRWE Pain Scale'](d.PRWE);
@@ -134,6 +149,7 @@ function App() {
                         d['Grip Strength Ratio'] = d["Mean of 3 Trials"].result*100;
                     })
                 }
+                console.log(_data)
                 return _data;
             })
     }
@@ -176,7 +192,12 @@ function App() {
             content: 'Delete all record and profile of patient: '+  data['Initials'],
             func: () => {
                 const id = data['_id'];
-                axios.get(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/delete?id=${id}`)
+                axios.delete(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/${id}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${masterId.jwtToken}`
+                        }
+                    })
                     .then(r => {
                         setConfirmFunc(false);
                         setreloadUserTable(true);
@@ -191,7 +212,12 @@ function App() {
                 content: 'Delete record : '+  data['Date'],
                 func: () => {
                     const id = data['_id'];
-                    axios.get(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/record/delete?id=${id}`)
+                    axios.delete(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/record/${id}`,
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${masterId.jwtToken}`
+                            }
+                        })
                         .then(r => {
                             setConfirmFunc(false);
                             editPatient({_id:data.caseId});
@@ -267,10 +293,15 @@ function App() {
 
     const handleSubmitNewIndex = ()=>{
         if (!IndexView){
-            axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/record`,newIndexData.current)
+            axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/record/create`,newIndexData.current,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${masterId.jwtToken}`
+                    }
+                })
                 .then((r)=>{
                     // if (!userData.prefill){
-                        axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?id=${userData._id}`,
+                        axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/${userData._id}`,
                             {
                                 prefill:{
                                     "TAM EX-0-Flex": {
@@ -295,6 +326,10 @@ function App() {
                                     ,
                                     "Action":newIndexData.current["Action"],
                                 }
+                            },{
+                                headers: {
+                                    'Authorization': `Bearer ${masterId.jwtToken}`
+                                }
                             })
                     // }
                     editPatient(userData);
@@ -309,7 +344,11 @@ function App() {
         const sendData = {...data};
         delete sendData.prefill;
         delete sendData["Wrist Index"];
-        axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?managerBy=${masterId}`,sendData)
+        axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/create`,sendData,{
+            headers: {
+                'Authorization': `Bearer ${masterId.jwtToken}`
+            }
+        })
             .then((respond)=>{
                 editPatient(respond.data);
             }).catch(e=>{
@@ -324,7 +363,7 @@ function App() {
         switch (page) {
             case 1:
                 return <Grid item xs={5}>
-                    <UserInfo data={{managerBy:masterId}} viewMode={false} handleSubmitPatient={handleSubmitPatient}
+                    <UserInfo data={{managerBy:masterId.id}} viewMode={false} handleSubmitPatient={handleSubmitPatient}
                               userEditMode={true} IndexEditMode={true} newIndex={newIndex} />
 
                 </Grid>;
@@ -393,7 +432,9 @@ function App() {
                 </Container>;
             default:
                 return <Grid item xs={12} lg={4}>
-                    <SignIn onSucess={(masterId)=>{setmasterId(masterId._id);setreloadUserTable(true); setPage(0)}}/>
+                    <SignIn onSucess={(masterId)=>{
+                        debugger;
+                        setmasterId(masterId);setreloadUserTable(true); setPage(0)}}/>
                 </Grid>
         }
     };

@@ -49,7 +49,7 @@ const useStyles = makeStyles((theme) => ({
 
 export default function SignIn(props) {
     const classes = useStyles();
-    const [username, setusername] = React.useState();
+    const [email, setemail] = React.useState();
     const [password, setpassword] = React.useState();
     const [meassage, setmeassage] = React.useState();
     return (
@@ -65,7 +65,10 @@ export default function SignIn(props) {
                 <form className={classes.form}  method="get"
                     onSubmit={(event)=>{
                         event.preventDefault();
-                        axios.get(((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)+`/login?username=${username}&password=${password}`)
+                        axios.post(((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)+`/accounts/authenticate`,{
+                            email:email,
+                            password:password,
+                        })
                             .then(respond=>{
                                 props.onSucess(respond.data)
                             }).catch(e=>{
@@ -75,14 +78,15 @@ export default function SignIn(props) {
                     <TextField
                         variant="outlined"
                         margin="normal"
+                        type="email"
                         required
                         fullWidth
                         id="email"
-                        label="User name"
-                        name="userName"
-                        autoComplete="userName"
-                        value={username}
-                        onChange={(e)=>setusername(e.target.value)}
+                        label="Email"
+                        name="email"
+                        autoComplete="email"
+                        value={email}
+                        onChange={(e)=>setemail(e.target.value)}
                         autoFocus
                     />
                     <TextField
