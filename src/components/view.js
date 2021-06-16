@@ -5,7 +5,7 @@ import Grid from "@material-ui/core/Grid";
 import UserInfo from "./userInfo";
 import WristViz from "./wristViz";
 import {
-    useParams,Switch,Route,useRouteMatch,Link
+    useParams, Switch, Route, useRouteMatch, Link, useHistory,useLocation
 } from "react-router-dom";
 import { scaleOrdinal } from 'd3-scale';
 import notfound from '../image/notfound.png'
@@ -16,6 +16,8 @@ import HomeIcon from '@material-ui/icons/Home';
 
 function View(props) {
     let { path, url } = useRouteMatch();
+    let location = useLocation();
+    let { from } = location.state || { from: { pathname: "/" } };
     return <Grid
         container
         direction="row"
@@ -38,7 +40,10 @@ function View(props) {
                         <h1>Invalid link</h1>
                     </Grid>
                     <Grid item>
-                        <Link to="/">
+                        <Link to={{
+                            pathname: "/login",
+                            state: {from}
+                        }}>
                     <Button variant="contained" color="primary" startIcon={<HomeIcon/>}>Return home</Button>
                         </Link>
                     </Grid>
@@ -51,39 +56,54 @@ function View(props) {
     </Switch></Grid>
 }
 function SingleView(props){
+    let location = useLocation();
     let { patientId } = useParams();
     const [userData, setuserData] = React.useState({});
     const [redirect, setredirect] = React.useState(false);
     const [selectedIndex, setselectedIndex] = React.useState(undefined);
     const radarColor = React.useRef(props.radarColor??scaleOrdinal().range(schemeCategory10));
+    debugger
     useEffect(()=>{
         viewPatient();
     },0);
     const viewPatient = ()=>{
         debugger
         const id = patientId;
-        axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile?id=${id}`)
+        axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/${id}`,{
+            headers: {
+                'Authorization': `Bearer ${props.token}`
+            }
+        })
             .then(r=>{
+                debugger
                 const d= r.data;
-                console.log(r)
                 setuserData(d);
                 radarColor.current.domain([]);
             }).catch(e=>{
-            setredirect(true);
+            setredirect(true)
         });
     };
     const onMouseOverIndex = (_id)=>{
         setselectedIndex(_id);
     };
 
-    return <>{redirect?<Redirect to="/view" />:<>
-        <Grid item xs={4}>
+    return <>{redirect?<Redirect to={{
+        pathname: "/view",
+        state: { from: location }
+    }}/>:<>
+        <Grid
+            container
+            direction="row"
+            justify="center"
+            alignItems="flex-start"
+        >
             <UserInfo data={userData} viewMode={true} userEditMode={false}  onMouseOver={onMouseOverIndex}
+                      onLoad={props.onLoad}
                       colors={radarColor.current} IndexEditMode={false}/>
         </Grid>
-        <Grid item xs={6}>
-            <WristViz onLoad={props.onLoad} data={userData['Wrist Index']} selectedIndex={selectedIndex} colors={radarColor.current}/>
-        </Grid>
+        {/*<Grid item xs={6}>*/}
+        {/*    <WristViz onLoad={props.onLoad} data={userData['Wrist Index']} selectedIndex={selectedIndex} colors={radarColor.current}/>*/}
+        {/*</Grid>*/}
     </>}</>;
 }
 export default View;

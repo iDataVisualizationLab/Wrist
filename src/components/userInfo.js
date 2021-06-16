@@ -110,6 +110,7 @@ function UserInfo(props) {
         const round = Math.round(value * 100) / 100;
         return (value !== round) ? round : value;
     }
+    debugger
     return (
         <Grid container spacing={1}
               justify="center"

@@ -70,8 +70,9 @@ function WristViz(props) {
     const prevData = usePrevious(props.data);
     const firstUpdate = useRef(true);
     useEffect(() => {
-        if (firstUpdate.current) {
+        if (props.onLoad&&firstUpdate.current) {
             firstUpdate.current = false;
+            debugger
             props.onLoad(false);
             return;
         }

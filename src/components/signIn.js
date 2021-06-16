@@ -12,6 +12,10 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
+import {
+    useHistory,
+    useLocation
+} from "react-router-dom";
 import * as axios from "axios";
 
 function Copyright() {
@@ -116,6 +120,15 @@ export default function SignIn(props) {
                         className={classes.submit}
                     >
                         Sign In
+                    </Button>
+                    <Button
+                        fullWidth
+                        variant="contained"
+                        // color="primary"
+                        className={classes.submit}
+                        href="#/register/"
+                    >
+                        Sign Up
                     </Button>
                     {/*<Grid container>*/}
                     {/*    <Grid item xs>*/}

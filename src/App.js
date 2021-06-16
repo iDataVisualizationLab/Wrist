@@ -14,7 +14,6 @@ import PROMs from "./components/PROMs";
 import WristIndex from "./components/WristIndex";
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import * as axios from "axios";
-import WristViz from "./components/wristViz";
 import DialogActions from "@material-ui/core/DialogActions";
 import Button from "@material-ui/core/Button";
 import DialogTitle from "@material-ui/core/DialogTitle";
@@ -24,8 +23,19 @@ import Dialog from "@material-ui/core/Dialog";
 import SignIn from "./components/signIn";
 import GetAppIcon from '@material-ui/icons/GetApp';
 import RadioChoice from "./components/radioChoice";
-import {BrowserRouter as Router, Link, Route, Switch, useRouteMatch} from "react-router-dom";
+import {
+    BrowserRouter as Router,
+    Link,
+    Route,
+    Switch,
+    useRouteMatch,
+    Redirect,
+    useHistory,
+    useLocation
+} from "react-router-dom";
 import View from "./components/view";
+import Registration from "./components/RegistrationForm";
+import VerifyEmail from "./components/VerifyEmail";
 
 const THEME = createMuiTheme({
     typography: {
@@ -57,6 +67,9 @@ const useStyles = makeStyles((theme) => ({
     backdrop: {
         zIndex: theme.zIndex.drawer + 1,
         color: '#fff',
+    },
+    grow:{
+        flexGrow: 1,
     }
 }));
 
@@ -76,28 +89,30 @@ const func ={
 
 function App() {
     const classes = useStyles();
-    const [masterId, setmasterId] = React.useState();
+    const [auth, setauth] = React.useState(null);
     const [busy, setBusy] = React.useState(false);
     const [userData, setuserData] = React.useState({});
     // const [userInfoView, setuserInfoView] = React.useState(false);
     const [IndexView, setIndexView] = React.useState(false);
     const newIndexData = React.useRef({});
     const [onNewIndex, setonNewIndex] = React.useState(false);
-    const [page, setPage] = React.useState(-1);
-    const [reloadUserTable, setreloadUserTable] = React.useState(masterId?true:false);
+    const [page, setPage] = React.useState(0);
+    const [reloadUserTable, setreloadUserTable] = React.useState(auth?true:false);
     const [patientLists, setPatientLists] = React.useState([]);
     const [confirmFunc,setConfirmFunc] = React.useState(false);
     const [selectedIndex,setselectedIndex] = React.useState(undefined);
     const radarColor = React.useRef(scaleOrdinal().range(schemeCategory10));
-
-
+    let { path, url } = useRouteMatch();
+    let history = useHistory();
+    let location = useLocation();
+    let { from } = location.state || { from: { pathname: "/" } };
     useEffect(()=>{
         if (reloadUserTable){
             setreloadUserTable(false);
-            axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/list?managerBy=${masterId.id}`,
+            axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/list?managerBy=${auth.id}`,
                 {
                     headers: {
-                        'Authorization': `Bearer ${masterId.jwtToken}`
+                        'Authorization': `Bearer ${auth.jwtToken}`
                     }
                 })
                 .then(r=>{
@@ -122,7 +137,7 @@ function App() {
         return  axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/${id}`,
             {
                 headers: {
-                    'Authorization': `Bearer ${masterId.jwtToken}`
+                    'Authorization': `Bearer ${auth.jwtToken}`
                 }
             })
             .then(r=>{
@@ -195,7 +210,7 @@ function App() {
                 axios.delete(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/${id}`,
                     {
                         headers: {
-                            'Authorization': `Bearer ${masterId.jwtToken}`
+                            'Authorization': `Bearer ${auth.jwtToken}`
                         }
                     })
                     .then(r => {
@@ -215,7 +230,7 @@ function App() {
                     axios.delete(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/record/${id}`,
                         {
                             headers: {
-                                'Authorization': `Bearer ${masterId.jwtToken}`
+                                'Authorization': `Bearer ${auth.jwtToken}`
                             }
                         })
                         .then(r => {
@@ -296,7 +311,7 @@ function App() {
             axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/record/create`,newIndexData.current,
                 {
                     headers: {
-                        'Authorization': `Bearer ${masterId.jwtToken}`
+                        'Authorization': `Bearer ${auth.jwtToken}`
                     }
                 })
                 .then((r)=>{
@@ -328,7 +343,7 @@ function App() {
                                 }
                             },{
                                 headers: {
-                                    'Authorization': `Bearer ${masterId.jwtToken}`
+                                    'Authorization': `Bearer ${auth.jwtToken}`
                                 }
                             })
                     // }
@@ -346,7 +361,7 @@ function App() {
         delete sendData["Wrist Index"];
         axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/create`,sendData,{
             headers: {
-                'Authorization': `Bearer ${masterId.jwtToken}`
+                'Authorization': `Bearer ${auth.jwtToken}`
             }
         })
             .then((respond)=>{
@@ -360,10 +375,11 @@ function App() {
     }
 
     const renderPage = ()=>{
+        debugger
         switch (page) {
             case 1:
                 return <Grid item xs={5}>
-                    <UserInfo data={{managerBy:masterId.id}} viewMode={false} handleSubmitPatient={handleSubmitPatient}
+                    <UserInfo data={{managerBy:auth.id}} viewMode={false} handleSubmitPatient={handleSubmitPatient}
                               userEditMode={true} IndexEditMode={true} newIndex={newIndex} />
 
                 </Grid>;
@@ -431,11 +447,7 @@ function App() {
                                 onLoad={onLoad} newPatient={newPatient}/>
                 </Container>;
             default:
-                return <Grid item xs={12} lg={4}>
-                    <SignIn onSucess={(masterId)=>{
-                        debugger;
-                        setmasterId(masterId);setreloadUserTable(true); setPage(0)}}/>
-                </Grid>
+                return ''
         }
     };
 
@@ -459,6 +471,10 @@ function App() {
                             </Typography>
                             </Button>
                         </Link>
+                        <div className={classes.grow} />
+                        {
+                            auth?<Button onClick={()=>{setauth(null);history.push("/");}}>Log out</Button>:''
+                        }
                     </Toolbar>
                 </AppBar>
             </div>
@@ -466,18 +482,74 @@ function App() {
                 <Switch>
                     <Route path="/view">
                         <View
+                            token={auth?auth.jwtToken:null}
                         onLoad={onLoad}/>
                     </Route>
-                    <Route path="/">
+                    <Route path="/login">
                         <Grid
                             container
                             direction="row"
                             justify="center"
                             alignItems="flex-start"
                         >
-                            {renderPage()}
+                            <Grid item xs={12} lg={4}>
+                                <SignIn
+                                    auth={auth}
+                                    onSucess={(auth)=>{
+                                        setauth(auth);setreloadUserTable(true); setPage(0);
+                                        history.replace(from);
+                                    }}/>
+                            </Grid>
                         </Grid>
                     </Route>
+                    <Route path={`/verify-email`}>
+                        <Grid
+                            container
+                            direction="row"
+                            justify="center"
+                            alignItems="flex-start"
+                        >
+                            <Grid item xs={12} lg={4}>
+                                <VerifyEmail/>
+                            </Grid>
+                        </Grid>
+                    </Route>
+                    <Route path="/register">
+                        <Grid
+                            container
+                            direction="row"
+                            justify="center"
+                            alignItems="flex-start"
+                        >
+                            <Grid item xs={12} lg={4}>
+                                <Registration
+                                    auth={auth}
+                                    onSucess={(auth)=>{
+                                        history.replace("/login");
+                                    }}/>
+                            </Grid>
+                        </Grid>
+                    </Route>
+                    <Route path="/"
+                           render={({ location }) =>
+                               auth ? (
+                                   <Grid
+                                       container
+                                       direction="row"
+                                       justify="center"
+                                       alignItems="flex-start"
+                                   >
+                                       {renderPage()}
+                                   </Grid>
+                               ) : (
+                                   <Redirect
+                                       to={{
+                                           pathname: "/login",
+                                           state: { from: location }
+                                       }}
+                                   />
+                               )
+                           }/>
                 </Switch>
             {/*</Router>*/}
 
@@ -510,5 +582,6 @@ function App() {
         </MuiThemeProvider>
     );
 }
+
 
 export default App;
