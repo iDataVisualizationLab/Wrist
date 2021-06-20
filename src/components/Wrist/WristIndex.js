@@ -19,6 +19,7 @@ import StepLabel from '@material-ui/core/StepLabel';
 import PROMs from "./PROMs";
 import MenuItem from "@material-ui/core/MenuItem";
 import ObjectiveMeasurement from "./ObjectiveMeasurements";
+import Moment from "moment";
 
 const useStyles = makeStyles((theme) => ({
     backButton: {
@@ -45,7 +46,7 @@ function getStepContent(step,props) {
                                fullWidth margin="dense"
                                label="Date of Evaluation" name="Date"
                                required
-                               defaultValue={props.getOutputData("Date")}
+                               defaultValue={props.getOutputData("Date")&&Moment.utc(props.getOutputData("Date")).format('yyyy-MM-DD')}
                                onChange={event=>props.getOutputData({"Date":event.target.value})} variant="outlined"/>
 
                 </Grid>

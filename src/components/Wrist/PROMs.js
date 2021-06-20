@@ -11,7 +11,7 @@ import SentimentSatisfiedIcon from '@material-ui/icons/SentimentSatisfied';
 import SentimentSatisfiedAltIcon from '@material-ui/icons/SentimentSatisfiedAltOutlined';
 import SentimentVerySatisfiedIcon from '@material-ui/icons/SentimentVerySatisfied';
 import * as d3 from "d3"
-import RadioChoice from "./radioChoice";
+import RadioChoice from "../UI/radioChoice";
 import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
 import Input from "@material-ui/core/Input";
@@ -56,6 +56,9 @@ function PROMs(props) {
 
     const handleAction= (val, index) => {
         Action[index] = val;
+        if(!val){
+            handlePSFS(undefined,index)
+        }
         setAction([...Action]);
         props.getOutputData({Action});
     };
@@ -123,7 +126,8 @@ function PROMs(props) {
                 {Template.PSFS
                     .map((d, i) => <Grid item xs container direction="row" spacing="1" alignItems="center" key={i}>
                             <Grid item xs={8}>
-                                {(props.first||props.viewMode)?Action[i]:<TextField
+                                {/*{(props.first||props.viewMode)?Action[i]:<TextField*/}
+                                {(props.viewMode)?Action[i]:<TextField
                                            InputLabelProps={{shrink: true}}
                                            margin="dense"
                                            size="small"

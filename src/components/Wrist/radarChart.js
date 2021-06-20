@@ -116,7 +116,6 @@ class RadarChart extends React.Component {
                 ob[this.props.keyColor] = d[this.props.keyColor]
             return ob;
         });
-        console.log(data)
         this.setState({data});
     }
 
@@ -129,7 +128,6 @@ class RadarChart extends React.Component {
                     ob[this.props.keyColor] = d[this.props.keyColor]
                 return ob
             });
-            console.log(data)
             this.setState({data});
         }
     }

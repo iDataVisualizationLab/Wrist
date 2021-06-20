@@ -16,8 +16,9 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import CancelIcon from '@material-ui/icons/Cancel';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
-import WristViz from "./wristViz";
+import WristViz from "./Wrist/wristViz";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
+import Moment from 'moment';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -110,7 +111,6 @@ function UserInfo(props) {
         const round = Math.round(value * 100) / 100;
         return (value !== round) ? round : value;
     }
-    debugger
     return (
         <Grid container spacing={1}
               justify="center"
@@ -144,7 +144,7 @@ function UserInfo(props) {
                                         <TextField disabled={props.viewMode || !((props.userEditMode || editMode))}
                                                    type="date"
                                                    InputLabelProps={{shrink: true}}
-                                                   value={data['Date of Birth']} fullWidth margin="dense"
+                                                   value={data['Date of Birth']&&Moment.utc(data['Date of Birth']).format('yyyy-MM-DD')} fullWidth margin="dense"
                                                    label="Date of Birth"
                                                    name="Date of Birth" onChange={handleChange} variant={styleField}/>
                                     </Grid>
@@ -173,7 +173,7 @@ function UserInfo(props) {
                                     <TextField disabled={props.viewMode || !((props.userEditMode || editMode))}
                                                type="date"
                                                InputLabelProps={{shrink: true}}
-                                               value={data['Date of Injury']} fullWidth margin="dense"
+                                               value={data['Date of Injury']&&Moment.utc(data['Date of Injury']).format('yyyy-MM-DD')} fullWidth margin="dense"
                                                label="Date of Injury/ onset of condition" name="Date of Injury"
                                                onChange={handleChange} variant={styleField}/>
                                 </Grid>
@@ -251,7 +251,7 @@ function UserInfo(props) {
                 </Grid>
                 {props.userEditMode ? '' : <Grid item xs>
                     <WristViz onLoad={props.onLoad}
-                              data={data['Wrist Index']}
+                              data={data['WristIndex']}
                               selectedIndex={props.selectedIndex}
                               colors={props.color}/>
                 </Grid>}
@@ -268,14 +268,14 @@ function UserInfo(props) {
                                 size="small"
                                 className={classes.AddButton}
                                 startIcon={<AddIcon/>}
-                                onClick={() => props.newIndex(data['prefill'], data['Wrist Index'])}
+                                onClick={() => props.newIndex(data['prefill'], data['WristIndex'])}
                             >
                                 New
                             </Button>}</h2>
-                            {(!(data['Wrist Index'] && data['Wrist Index'].length)) ?
+                            {(!(data['WristIndex'] && data['WristIndex'].length)) ?
                                 <span>No record! Please add data</span> :
                                 <TableContainer className={classes.container}>
-                                    <Table stickyHeader aria-label="sticky table">
+                                    <Table stickyHeader aria-label="sticky table"  size="small">
                                         <TableHead>
                                             <TableRow>
                                                 <TableCell>Dates of Evaluations</TableCell>
@@ -286,12 +286,12 @@ function UserInfo(props) {
                                         </TableHead>
 
                                         <TableBody>
-                                            {data['Wrist Index'].map((d, i) => <TableRow hover onMouseOver={() => {
+                                            {data['WristIndex'].map((d, i) => <TableRow hover onMouseOver={() => {
                                                 onMouseOver(d._id)
                                             }} onMouseLeave={() => onMouseOver(undefined)}>
                                                 <TableCell
                                                     style={{color: props.colors ? props.colors(d._id) : 'unset'}}>
-                                                    {d['Date']}
+                                                    {d['Date']&&Moment.utc(d['Date']).format('MM/DD/yyyy')}
                                                 </TableCell>
                                                 <TableCell
                                                     style={{color: props.colors ? props.colors(d._id) : 'unset'}}>

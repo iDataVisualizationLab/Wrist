@@ -110,7 +110,7 @@ function ObjectiveMeasurement(props) {
         return data[mainKey][subKey][index]
     };
 
-    const sectionRender = (d) => {
+    const sectionRender = (d,isopensecond) => {
         return (<>
             {d.sub.map((e, i) => <Grid item xs container direction="row" alignItems="center" spacing={1}>
                 <Grid item xs>
@@ -129,7 +129,7 @@ function ObjectiveMeasurement(props) {
                 <Grid item className={classes.input}>
                     <TextField
                         // disabled={props.viewMode}
-                        disabled={props.first||props.viewMode}
+                        disabled={(props.first&&!isopensecond)||props.viewMode}
                                type="number"
                                InputLabelProps={{shrink: true}}
                                inputProps={{style: { textAlign: 'right'},max: 110}}
@@ -149,7 +149,7 @@ function ObjectiveMeasurement(props) {
                 </Grid>
             </Grid></>)
     };
-    const sectionRender2 = (d) => {
+    const sectionRender2 = (d,openSecond) => {
         return (<>
             {d.sub.map((e, i) => <Grid item xs container direction="row" alignItems="center" spacing={1}>
                 <Grid item xs>
@@ -168,7 +168,7 @@ function ObjectiveMeasurement(props) {
                 <Grid item className={classes.input}>
                     <TextField
                         // disabled={props.viewMode}
-                        disabled={props.first||props.viewMode}
+                        disabled={(props.first&&(!openSecond))||props.viewMode}
                         type="number"
                                InputLabelProps={{shrink: true}}
                                inputProps={{style: { textAlign: 'right'}}}
@@ -209,7 +209,7 @@ function ObjectiveMeasurement(props) {
         </Grid>
         {[{key: 'TAM EX-0-Flex', sub: [{text: 'Extension'}, {text: 'Flexion'}]},
             {key: 'TAM Pro-0-Sup', sub: [{text: 'Pronation'}, {text: 'Supination'}]},
-            {key: 'TAM Rad-0-Ulnar', sub: [{text: 'Radial Deviation'}, {text: 'Ulnar Deviation'}]}].map(sectionRender)}
+            {key: 'TAM Rad-0-Ulnar', sub: [{text: 'Radial Deviation'}, {text: 'Ulnar Deviation'}]}].map(d=>sectionRender(d))}
         <h3 align='center' className={classes.title}>Gripstrength (Dynamometer, Position II)</h3>
         <Grid item xs container direction="row" spacing={1}>
             <Grid item xs>
@@ -228,9 +228,9 @@ function ObjectiveMeasurement(props) {
                 </Box>
             </Grid>
         </Grid>
-        {[{key: 'Mean of 3 Trials', sub: [{text: 'Forearm Neutral 1'}, {text: 'Forearm Neutral 2'}, {text: 'Forearm Neutral 3'}]}].map(sectionRender)}
-        {[{key: 'Grip Strength Supination Ratio', sub: [{text: 'Forearm Supination'}]}].map(sectionRender2)}
-        {[{key: 'Grip Strength Pronation Ratio', sub: [{text: 'Forearm Pronation'}]}].map(sectionRender2)}
+        {[{key: 'Mean of 3 Trials', sub: [{text: 'Forearm Neutral 1'}, {text: 'Forearm Neutral 2'}, {text: 'Forearm Neutral 3'}]}].map(d=>sectionRender(d,true))}
+        {[{key: 'Grip Strength Supination Ratio', sub: [{text: 'Forearm Supination'}]}].map(d=>sectionRender2(d,true))}
+        {[{key: 'Grip Strength Pronation Ratio', sub: [{text: 'Forearm Pronation'}]}].map(d=>sectionRender2(d,true))}
     </Grid>)
 }
 

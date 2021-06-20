@@ -19,7 +19,7 @@ function RadioChoice(props){
     const [hover, setHover] = React.useState(-1);
     const classes = useStyles();
     useEffect(()=>{
-        setValue(scaleValRevert(props.value));
+        setValue((typeof props.value === 'number')?scaleValRevert(props.value):null);
     });
     const getmax = ()=>{
         return props.max-(props.min??0)+1;
@@ -39,7 +39,7 @@ function RadioChoice(props){
             size={getmax()>5?"small":"medium"}
             onChange={(event, newValue) => {
                 if (props.handeData){
-                    props.handeData(newValue===null?null:scaleVal(newValue));
+                    props.handeData(((newValue===null)|| (newValue === undefined))?null:scaleVal(newValue));
                 }else{
                     setValue(newValue);
                 }
@@ -48,7 +48,7 @@ function RadioChoice(props){
                 setHover(newHover);
             }}
         />
-        {value !== null && <Box ml={2}>{props.labels?scaleVal(props.labels[hover !== -1 ? hover : value]):scaleVal(hover !== -1 ? hover : value)}</Box>}
+        {((value !== null)&& (value !== undefined)) && <Box ml={2}>{props.labels?scaleVal(props.labels[hover !== -1 ? hover : value]):scaleVal(hover !== -1 ? hover : value)}</Box>}
     </div>)
 }
 export default RadioChoice;

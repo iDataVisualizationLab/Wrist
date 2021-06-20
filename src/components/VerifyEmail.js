@@ -53,7 +53,6 @@ const useStyles = makeStyles((theme) => ({
 
 export default function VerifyEmail(props) {
     const classes = useStyles();
-    console.log(useLocation())
     const {search} = useLocation();
     let token  = new URLSearchParams(search).get('token');
     const [isSuccess, setisSuccess] = React.useState(false);

@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {makeStyles, withStyles, MuiThemeProvider, createMuiTheme, fade} from '@material-ui/core/styles';
 import './App.css';
 import Backdrop from "@material-ui/core/Backdrop";
@@ -10,8 +10,7 @@ import Grid from "@material-ui/core/Grid";
 import UserInfo from "./components/userInfo";
 import {sum, mean, count, schemeCategory10, default as d3} from "d3";
 import { scaleOrdinal } from 'd3-scale';
-import PROMs from "./components/PROMs";
-import WristIndex from "./components/WristIndex";
+import WristIndex from "./components/Wrist/WristIndex";
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import * as axios from "axios";
 import DialogActions from "@material-ui/core/DialogActions";
@@ -22,7 +21,7 @@ import DialogContentText from "@material-ui/core/DialogContentText";
 import Dialog from "@material-ui/core/Dialog";
 import SignIn from "./components/signIn";
 import GetAppIcon from '@material-ui/icons/GetApp';
-import RadioChoice from "./components/radioChoice";
+import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 import {
     BrowserRouter as Router,
     Link,
@@ -36,6 +35,10 @@ import {
 import View from "./components/view";
 import Registration from "./components/RegistrationForm";
 import VerifyEmail from "./components/VerifyEmail";
+import ResetPassword from "./components/resetPassword";
+import RoundButton from "./components/UI/RoundButton";
+import AccountCircle from '@material-ui/icons/AccountCircle';
+import api from "./components/api";
 
 const THEME = createMuiTheme({
     typography: {
@@ -73,20 +76,6 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-const func ={
-    'TAM EX-0-Flex':(arr,arr2)=>sum(arr)/sum(arr2),
-    'TAM Pro-0-Sup':(arr,arr2)=>sum(arr)/sum(arr2),
-    'TAM Rad-0-Ulnar':(arr,arr2)=>sum(arr)/sum(arr2),
-    'Mean of 3 Trials': (arr,arr2)=> (sum(arr)/3)/(sum(arr2)/3),
-    'Grip Strength Supination Ratio':(a,b)=> a/b,
-    'Grip Strength Pronation Ratio':(a,b)=> a/b,
-    'PSFS score':(PSFS)=>mean(PSFS),
-    'PRWE Pain Scale':(PRWE)=>sum(PRWE.slice(0,5)),
-    'PRWE Function subscale':(PRWE)=>(sum(PRWE.slice(5, 15))+(10-count(PRWE.slice(5, 15)))*mean(PRWE.slice(5, 15)))/2,
-    'SANE score':(PRWE)=>PRWE[17],
-    'MHQ score':(MHQ)=>(sum(MHQ)-5)/20*100,
-};
-
 function App() {
     const classes = useStyles();
     const [auth, setauth] = React.useState(null);
@@ -106,15 +95,28 @@ function App() {
     let history = useHistory();
     let location = useLocation();
     let { from } = location.state || { from: { pathname: "/" } };
-    useEffect(()=>{
+    const firstUpdate = useRef(true);
+    useEffect(async ()=>{
+        if (firstUpdate.current) {
+            firstUpdate.current = false;
+            let token = localStorage.getItem("refreshToken");
+            debugger
+            if (token) {
+                try {
+                    const res = await api.refreshToken({token});
+                    localStorage.setItem("accessToken", res.data.jwtToken);
+                    localStorage.setItem("refreshToken", res.data.refreshToken);
+                    setauth(res.data);
+                    setreloadUserTable(true);
+                    setPage(0);
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+        }
         if (reloadUserTable){
             setreloadUserTable(false);
-            axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/list?managerBy=${auth.id}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${auth.jwtToken}`
-                    }
-                })
+            axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/list?managerBy=${auth.id}`)
                 .then(r=>{
                     setPatientLists(r.data)
                 });
@@ -133,44 +135,10 @@ function App() {
         // setuserInfoView(false);
         setPage(1);
     };
-    const getData = (id)=>{
-        return  axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/${id}`,
-            {
-                headers: {
-                    'Authorization': `Bearer ${auth.jwtToken}`
-                }
-            })
-            .then(r=>{
-                const _data = r.data;
-                // recalculate
-                if (_data["Wrist Index"]){
-                    _data["Wrist Index"].forEach(d=>{
-                        console.log(d);
 
-
-                        ["TAM EX-0-Flex", "TAM Pro-0-Sup", "TAM Rad-0-Ulnar", "Mean of 3 Trials", "Grip Strength Supination Ratio", "Grip Strength Pronation Ratio"].forEach(k=>{
-                            d[k].result = func[k](d[k]['Involved Hand'],d[k]['Contra-lateral Hand'])
-                        });
-
-                        d['PSFS score'] = func['PSFS score'](d.PSFS);
-                        d['PRWE Pain Scale'] = func['PRWE Pain Scale'](d.PRWE);
-                        d['PRWE Function subscale'] = func['PRWE Function subscale'](d.PRWE);
-                        d['SANE score'] = func['SANE score'](d.PRWE);
-                        d['MHQ score'] = func['MHQ score'](d.MHQ);
-
-                        d['Wrist range motion Flexion/Extension'] = d["TAM EX-0-Flex"].result*100;
-                        d['Wrist range motion Pronation/Supination'] = d["TAM Pro-0-Sup"].result*100;
-                        d['Wrist range motion Radial / Ulnar Deviation'] = d["TAM Rad-0-Ulnar"].result*100;
-                        d['Grip Strength Ratio'] = d["Mean of 3 Trials"].result*100;
-                    })
-                }
-                console.log(_data)
-                return _data;
-            })
-    }
     const editPatient = (data)=>{
         const id = data['_id'];
-        getData(id)
+        api.getPatientData(id)
             .then(d=>{
                 setuserData(d);
                 radarColor.current.domain([]);
@@ -193,7 +161,7 @@ function App() {
 
     const viewPatient = (data)=>{
         const id = data['_id'];
-        getData(id)
+        api.getPatientData(id)
             .then(d=>{
                 setuserData(d);
                 radarColor.current.domain([]);
@@ -207,12 +175,7 @@ function App() {
             content: 'Delete all record and profile of patient: '+  data['Initials'],
             func: () => {
                 const id = data['_id'];
-                axios.delete(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/${id}`,
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${auth.jwtToken}`
-                        }
-                    })
+                axios.delete(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/${id}`)
                     .then(r => {
                         setConfirmFunc(false);
                         setreloadUserTable(true);
@@ -227,12 +190,7 @@ function App() {
                 content: 'Delete record : '+  data['Date'],
                 func: () => {
                     const id = data['_id'];
-                    axios.delete(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/record/${id}`,
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${auth.jwtToken}`
-                            }
-                        })
+                    axios.delete(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/record/${id}`)
                         .then(r => {
                             setConfirmFunc(false);
                             editPatient({_id:data.caseId});
@@ -308,12 +266,7 @@ function App() {
 
     const handleSubmitNewIndex = ()=>{
         if (!IndexView){
-            axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/record/create`,newIndexData.current,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${auth.jwtToken}`
-                    }
-                })
+            axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/record/create`,newIndexData.current)
                 .then((r)=>{
                     // if (!userData.prefill){
                         axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/${userData._id}`,
@@ -341,10 +294,6 @@ function App() {
                                     ,
                                     "Action":newIndexData.current["Action"],
                                 }
-                            },{
-                                headers: {
-                                    'Authorization': `Bearer ${auth.jwtToken}`
-                                }
                             })
                     // }
                     editPatient(userData);
@@ -358,12 +307,8 @@ function App() {
     const handleSubmitPatient = (data)=>{
         const sendData = {...data};
         delete sendData.prefill;
-        delete sendData["Wrist Index"];
-        axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/create`,sendData,{
-            headers: {
-                'Authorization': `Bearer ${auth.jwtToken}`
-            }
-        })
+        delete sendData["WristIndex"];
+        axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/create`,sendData)
             .then((respond)=>{
                 editPatient(respond.data);
             }).catch(e=>{
@@ -393,29 +338,29 @@ function App() {
                               onMouseOver={onMouseOverIndex}
                               IndexEditMode={true} newIndex={newIndex}
                               colors={radarColor.current}
-                              func={func} onLoad={onLoad}
+                              func={api.func} onLoad={onLoad}
                               selectedIndex={selectedIndex}
                     />
                     {/*<UserInfo data={userData} viewMode={userInfoView} userEditMode={true} IndexEditMode={true} newIndex={newIndex} />*/}
                 </Grid>
                     {/*<Grid item xs={7}>*/}
-                    {/*    <WristViz func={func} onLoad={onLoad} data={userData['Wrist Index']} selectedIndex={selectedIndex} colors={radarColor.current}/>*/}
+                    {/*    <WristViz func={func} onLoad={onLoad} data={userData['WristIndex']} selectedIndex={selectedIndex} colors={radarColor.current}/>*/}
                     {/*</Grid>*/}
                     </>;
             case 3:
                 return <><Grid item xs={12}>
                     <UserInfo data={userData} viewMode={true} userEditMode={false}  onMouseOver={onMouseOverIndex}
                               colors={radarColor.current} IndexEditMode={false} newIndex={newIndex}
-                              func={func} onLoad={onLoad}
+                              func={api.func} onLoad={onLoad}
                               viewIndex={viewIndex}
                               selectedIndex={selectedIndex}/>
                 </Grid>
                     {/*<Grid item xs={7}>*/}
-                    {/*    <WristViz func={func} onLoad={onLoad} data={userData['Wrist Index']} selectedIndex={selectedIndex} colors={radarColor.current}/>*/}
+                    {/*    <WristViz func={func} onLoad={onLoad} data={userData['WristIndex']} selectedIndex={selectedIndex} colors={radarColor.current}/>*/}
                     {/*</Grid>*/}
                 </>;
             case 0:
-                return <Container maxWidth="sm">
+                return <Container>
                     <Grid item container xs={12} style={{paddingTop:10}} spacing={1} alignItems={"center"}>
                         <Grid item> Download </Grid>
                         <Grid item>
@@ -444,6 +389,7 @@ function App() {
                     <ManageUser viewPatient={viewPatient} editPatient={editPatient}
                                 deletePatient={deletePatient}
                                 rows={patientLists}
+                                onShare={api.sharePatient}
                                 onLoad={onLoad} newPatient={newPatient}/>
                 </Container>;
             default:
@@ -473,7 +419,20 @@ function App() {
                         </Link>
                         <div className={classes.grow} />
                         {
-                            auth?<Button onClick={()=>{setauth(null);history.push("/");}}>Log out</Button>:''
+                            auth?<>
+                                Hi, {auth.role==='Admin'&&'Admin'} <AccountCircle style={{marginLeft:10,marginRight:10}}/> {auth.firstName} {auth.lastName}
+                                <RoundButton
+                                color={"primary"}
+                                variant={"contained"}
+                                startIcon={<ExitToAppIcon />}
+                                onClick={()=>{api.logout().then(r=>{
+                                    api.cleanToken();
+                                    setauth(null);history.push("/");
+                                }).catch(e=>{
+                                    api.cleanToken();
+                                    setauth(null);history.push("/");
+                                })}}>Log out</RoundButton>
+                            </>:''
                         }
                     </Toolbar>
                 </AppBar>
@@ -483,24 +442,45 @@ function App() {
                     <Route path="/view">
                         <View
                             token={auth?auth.jwtToken:null}
+                            embededLogin={<SignIn
+                                auth={auth}
+                                onSucess={(res) => {
+                                    const auth = res.data;
+                                    localStorage.setItem("accessToken", auth.jwtToken);
+                                    localStorage.setItem("refreshToken", auth.refreshToken);
+
+                                    setauth(auth);
+                                    setreloadUserTable(true);
+                                    setPage(0);
+                                    history.replace(from);
+                                }}/>}
                         onLoad={onLoad}/>
                     </Route>
                     <Route path="/login">
-                        <Grid
+                        {auth ? <Redirect to={'/'}/> : <Grid
                             container
                             direction="row"
                             justify="center"
                             alignItems="flex-start"
                         >
-                            <Grid item xs={12} lg={4}>
+                            <Grid item xs={12} lg={8}>
+                                <Container component="main" maxWidth="xl">
                                 <SignIn
                                     auth={auth}
-                                    onSucess={(auth)=>{
-                                        setauth(auth);setreloadUserTable(true); setPage(0);
+                                    onSucess={(res) => {
+                                        const auth = res.data;
+                                        localStorage.setItem("accessToken", auth.jwtToken);
+                                        localStorage.setItem("refreshToken", auth.refreshToken);
+
+                                        setauth(auth);
+                                        setreloadUserTable(true);
+                                        setPage(0);
                                         history.replace(from);
                                     }}/>
+                                </Container>
                             </Grid>
                         </Grid>
+                        }
                     </Route>
                     <Route path={`/verify-email`}>
                         <Grid
@@ -514,7 +494,7 @@ function App() {
                             </Grid>
                         </Grid>
                     </Route>
-                    <Route path="/register">
+                    <Route path={`/reset-password`}>
                         <Grid
                             container
                             direction="row"
@@ -522,6 +502,18 @@ function App() {
                             alignItems="flex-start"
                         >
                             <Grid item xs={12} lg={4}>
+                                <ResetPassword/>
+                            </Grid>
+                        </Grid>
+                    </Route>
+                    <Route path="/register">
+                        <Grid
+                            container
+                            direction="row"
+                            justify="center"
+                            alignItems="flex-start"
+                        >
+                            <Grid item xs={12} lg={8}>
                                 <Registration
                                     auth={auth}
                                     onSucess={(auth)=>{
@@ -574,7 +566,7 @@ function App() {
                     </Button>
                 </DialogActions>
             </Dialog>
-            {onNewIndex?<WristIndex func={func} open={onNewIndex} first={onNewIndex.firstRecord} viewMode={IndexView} handleCancel={handleCancelNewIndex} getOutputData={getOutputData} handleSubmit={handleSubmitNewIndex}/>:''}
+            {onNewIndex?<WristIndex func={api.func} open={onNewIndex} first={onNewIndex.firstRecord} viewMode={IndexView} handleCancel={handleCancelNewIndex} getOutputData={getOutputData} handleSubmit={handleSubmitNewIndex}/>:''}
             <Backdrop className={classes.backdrop} open={busy !== false}>
                 <CircularProgress color="secondary"/>
                 <span>{(busy || {text: ''}).text}</span>
