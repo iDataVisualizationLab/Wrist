@@ -424,7 +424,7 @@ function App() {
                                 rows={patientLists}
                                 onShare={api.sharePatient}
                                 onLoad={onLoad} newPatient={newPatient}/>
-                    {(auth&&auth.role==='Admin')?<PatientChart label={patientLists.map(d=>({id:d._id,name:d.Initials}))} data={patientLists.map(d=>d.WristIndex)}/>:''}
+                    <PatientChart label={patientLists.map(d=>({id:d._id,name:d.Initials}))} data={patientLists.map(d=>d.WristIndex)}/>
                 </Container>;
             default:
                 return ''

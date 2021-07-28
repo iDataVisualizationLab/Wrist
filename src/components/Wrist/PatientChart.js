@@ -23,10 +23,10 @@ class WristChart extends React.Component {
             heightG: function () {
                 return this.height - this.margin.top - this.margin.bottom
             },
-            fontSize: 12,
+            fontSize: 14,
             LineFunc: d3.line()
                 // .interpolate("linear-closed")
-                .curve(d3.curveCardinal.tension(0.9))
+                .curve(d3.curveMonotoneX)
                 .x((d) => {
                     return this.xScale(d.time);
                 })
@@ -57,7 +57,7 @@ class WristChart extends React.Component {
     zoomed(event) {
         this.setState({
             zoomTransform: event.transform,
-            fontSize: this.state.opts.fontSize/event.transform.k
+            // fontSize: this.state.opts.fontSize/event.transform.k
         });
     }
     adjustFont(){
@@ -66,10 +66,12 @@ class WristChart extends React.Component {
             const currentWidth= this.svg.current.getBoundingClientRect().width;
             if (currentWidth){
                 const fontSize = this.state.opts.fontSize*this.state.width/currentWidth;
-                const fontSize_adjust = fontSize/this.state.zoomTransform.k;
-                if(this.state.fontSize!==fontSize || fontSize_adjust!==this.state.fontSize){
-                    this.state.fontSize=fontSize;
-                    this.setState({fontSize:fontSize/this.state.zoomTransform.k});
+                // const fontSize_adjust = fontSize/this.state.zoomTransform.k;
+                if(this.state.fontSize!==fontSize){
+                // if(this.state.fontSize!==fontSize || fontSize_adjust!==this.state.fontSize){
+                //     this.state.fontSize=fontSize;
+                //     this.setState({fontSize:fontSize/this.state.zoomTransform.k});
+                    this.setState({fontSize:fontSize});
                 }
             }
         }
@@ -88,14 +90,21 @@ class WristChart extends React.Component {
     handleData(_data = [[]], _labels = []) {
         const data = _data.map((arr, arri) => {
             console.log(arr)
-            const drawData = arr.map(d => {
+            const drawData = arr.map((d,i) => {
                 const ob = axis.map(a => a.scale(((typeof (d[a.id]) === 'object') && d[a.id]) ? d[a.id].result : d[a.id]));
                 if (this.props.keyColor)
                     ob[this.props.keyColor] = d[this.props.keyColor];
                 ob.mean = d3.mean(ob);
+                ob.index = i;
                 ob.time = new Date(d.Date);
                 return ob;
             }).sort((a, b) => a.time - b.time);
+            drawData.forEach((d,i)=>{
+                if(i){
+                    d.delta = d.mean-drawData[i-1].mean;
+                }else
+                    d.delta = undefined;
+            })
             drawData.name = _labels[arri].name;
             drawData.id = _labels[arri].id ?? arri;
             return drawData;
@@ -109,6 +118,7 @@ class WristChart extends React.Component {
             this.xScale.domain(d3.extent(_.flatten(data), d => d.time));
             this.setState({data});
         }
+        this.adjustFont()
     }
 
     render() {
@@ -132,8 +142,7 @@ class WristChart extends React.Component {
                        fontSize={this.state.fontSize}
                        transform={`translate(${[this.state.margin.left+this.state.zoomTransform.x, this.state.margin.top+this.state.zoomTransform.y]})  scale(${this.state.zoomTransform.k})`}>
                         {this.state.data.map(arr => <g key={arr.id}
-                                                       style={{opacity: this.state.highlight!==undefined?(arr.id===this.state.highlight?1:0.2):1}}
-                                                       onMouseOver={()=>{this.setState({highlight:arr.id})}} onMouseLeave={()=>this.setState({highlight:undefined})}>
+                                                       style={{opacity: this.state.highlight!==undefined?(arr.id===this.state.highlight.g.id?1:0.2):1}}>
                             <g className={"Line"}
                                fill={"none"} strokeOpacity={1} strokeWidth={0.5}>
                                 <path d={this.state.LineFunc(arr)}
@@ -148,6 +157,7 @@ class WristChart extends React.Component {
                                     // stroke={this.state.colorLevels(d.mean)}
                                                          stroke={'black'}
                                                          strokeWidth={0.5}
+                                                         onMouseOver={(event)=>{this.setState({highlight:{g:arr,el:d}})}} onMouseLeave={()=>this.setState({highlight:undefined})}
                                 />)}
                                 {arr.map((d, i) => <circle cx={this.xScale(d.time)}
                                                            cy={this.yScale(d.mean)}
@@ -161,7 +171,7 @@ class WristChart extends React.Component {
                             <line x2={this.state.widthG()} stroke={'black'}/>
                             {xScale.ticks(10).map(t=><g className={"ticks"}>
                                 <line transform={`translate(${[xScale(t),0]})`} y2={5} stroke={'black'}/>
-                                <text x={xScale(t)} textAnchor={"middle"} y={5} dy={'1rem'}>{multiFormat(t)}</text>
+                                <text x={xScale(t)} textAnchor={"middle"} y={5} dy={'1rem'} fontSize={this.state.fontSize}>{multiFormat(t)}</text>
                             </g>)}
                             <text y={5} dy={'2.5rem'} x={this.state.widthG()/2} textAnchor={"middle"} style={{fontWeight:'bold'}}>Dates of Evaluations</text>
                         </g>
@@ -169,10 +179,26 @@ class WristChart extends React.Component {
                             <line y2={this.state.heightG()} stroke={'black'}/>
                             {yScale.ticks(5).map(t=><g className={"ticks"}>
                                 <line transform={`translate(${[0,yScale(t)]})`} x2={-5} stroke={'black'}/>
-                                <text y={yScale(t)} textAnchor={"end"} x={-7} dy={6}>{t}</text>
+                                <text y={yScale(t)} textAnchor={"end"} x={-7} dy={6} fontSize={this.state.fontSize}>{t}</text>
                             </g>)}
                         </g>
                     </g>
+                    {this.state.highlight?<g transform={`translate(${[this.state.margin.left+xScale(this.state.highlight.el.time)+25, this.state.margin.top+yScale(this.state.highlight.el.mean)-0]})`}
+                                             fontSize={this.state.fontSize}
+                                             style={{pointerEvents:'none'}}
+                    >
+                        <rect width={120} height={50} y={-10} x={-5} fill={'white'}/>
+                        <text>Initials:</text>
+                        <text x={30}>{this.state.highlight.g.name}</text>
+                        <text y={12}>Date:</text>
+                        <text y={12} x={30}>{this.state.highlight.el.time.toLocaleString()}</text>
+                        <text y={24}>Score:</text>
+                        <text y={24} x={30}>{d3.format('.2f')(this.state.highlight.el.mean)}</text>
+                        <text y={36}>ΔScore:</text>
+                        <text y={36} x={30}
+                              fill={this.state.highlight.el.delta<0?'red':'green'}
+                        >{this.state.highlight.el.index?d3.format('.2f')(this.state.highlight.el.delta):'-'}</text>
+                    </g>:''}
                 </svg>
             </div>
         );
