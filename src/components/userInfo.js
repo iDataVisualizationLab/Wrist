@@ -11,6 +11,7 @@ import AddIcon from '@material-ui/icons/Add';
 import SaveIcon from '@material-ui/icons/Save';
 import IconButton from "@material-ui/core/IconButton";
 import VisibilityIcon from "@material-ui/icons/Visibility";
+import ChatIcon from '@material-ui/icons/Chat';
 import EditIcon from "@material-ui/icons/Edit";
 import DeleteIcon from "@material-ui/icons/Delete";
 import CancelIcon from '@material-ui/icons/Cancel';
@@ -19,6 +20,7 @@ import Select from '@material-ui/core/Select';
 import WristViz from "./Wrist/wristViz";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import Moment from 'moment';
+import Tooltip from "@material-ui/core/Tooltip";
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -304,6 +306,11 @@ function UserInfo(props) {
                                                         <IconButton aria-label="view" size="small"
                                                                     onClick={() => props.viewIndex(d)}>
                                                             <VisibilityIcon fontSize="inherit"/>
+                                                        </IconButton>
+                                                        <IconButton aria-label="view" size="small"
+                                                                    onClick={() => props.IndexEditMode ?props.editComment(d):props.viewComment(d)}>
+                                                            {d.comment?<Tooltip title={d.comment.text} arrow><ChatIcon fontSize="inherit" color="primary"/></Tooltip>:
+                                                                <ChatIcon fontSize="inherit"/>}
                                                         </IconButton>
                                                         {props.IndexEditMode ? <>
                                                             <IconButton aria-label="edit" size="small"

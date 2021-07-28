@@ -2,56 +2,11 @@ import React, {Component} from 'react';
 import * as d3 from 'd3';
 import {scaleLinear} from 'd3-scale';
 import {withStyles} from "@material-ui/core/styles";
-import Text from "./Text";
+import {axis,axisAngle} from "./parameter";
 
 const styles = theme => ({
 });
-const axis = [
-    {id: 'PSFS score', label: 'PSFS (0-10 / Poor=0 ; Good=10)', range: [0, 10]},
-    {id: 'PRWE Pain Scale', label: 'PRWE Pain Scale (0-50 0= no pain, 10= worst pain ever)', range: [50, 0]},
-    {
-        id: 'PRWE Function subscale',
-        label: 'PRWE Function subscale (0-50 / 0= no difficulty, 10= unable to do)',
-        range: [50, 0]
-    },
-    {id: 'SANE score', label: 'SANE  rate injured body part on a scale of 0-100?/ 100= normal', range: [0, 100]},
-    {
-        id: 'MHQ score',
-        label: 'MHQ work module (1-5 / 1=always, 2=often, 3=sometimes, 4=rarely, 5=never)',
-        range: [1, 100]
-    },
-    {
-        id: 'Wrist range motion Flexion/Extension',
-        label: 'Wrist range motion Flexion/Extension (0= no ROM- 100% equal or better than contra-lateral  wrist )',
-        range: [0, 100]
-    },
-    {
-        id: 'Wrist range motion Pronation/Supination',
-        label: 'Wrist range motion Pronation/Supination  (0= no ROM- 100% equal or better than contra-lateral wrist )',
-        range: [0, 100]
-    },
-    {
-        id: 'Wrist range motion Radial / Ulnar Deviation',
-        label: 'Wrist range motion Radial / Ulnar Deviation (0= no ROM- 100% equal or better than contra-lateral wrist )',
-        range: [0, 100]
-    },
-    {
-        id: 'Grip Strength Ratio',
-        label: 'Grip Strength Ratio  (0= no  grip strength - 100% equal or better than  contra-lateral wrist )',
-        range: [0, 100]
-    },
-    {
-        id: 'Grip Strength Supination Ratio',
-        label: 'Grip Strength  Supination Ratio (0= no  grip strength - 100% equal or better than  contra-lateral wrist )',
-        range: [0, 1]
-    },
-    {
-        id: 'Grip Strength Pronation Ratio',
-        label: 'Grip Strength  Pronation Ratio  (0= no  grip strength - 100% equal or better than  contra-lateral wrist )',
-        range: [0, 1]
-    },
-];
-const axisAngle = d3.scaleLinear().domain([0, axis.length]).range([0, Math.PI * 2]);
+
 class WristChart extends React.Component {
     constructor(props) {
         super(props);

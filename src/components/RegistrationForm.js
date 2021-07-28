@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import csc from 'country-state-city'
@@ -74,10 +74,21 @@ export default function Registration(props) {
     const [state, setstate] = React.useState();
     const [stateO, setstateO] = React.useState(null);
     const [country, setcountry] = React.useState();
-    const [countryO, setcountryO] = React.useState(countryList.find(c => c.name === 'United States'));
+    const [countryO, setcountryO] = React.useState(null);
     const [message, setmessage] = React.useState();
     const [stateList, setstateList] = React.useState([]);
     const [cityList, setcityList] = React.useState([]);
+    useEffect(()=>{
+        const value = countryList.find(c => c.name === 'United States');
+        setcountryO(value);
+        setcountry(value.name);
+        setstateList(csc.getStatesOfCountry(value.isoCode));
+        setcityList(csc.getCitiesOfCountry(value.isoCode));
+        setstateO('');
+        setstate('');
+        setcityO('');
+        setcity('');
+    },0);
     return (
         <Container component="main" maxWidth="lg">
             <CssBaseline/><Grid container justify="center"
@@ -359,7 +370,6 @@ export default function Registration(props) {
                                                 setstate('');
                                                 setcityO('');
                                                 setcity('');
-                                                console.log(cityO, stateO)
                                             }
                                             }
                                             renderInput={(params) => <TextField {...params}

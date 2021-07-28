@@ -129,7 +129,7 @@ function ObjectiveMeasurement(props) {
                 <Grid item className={classes.input}>
                     <TextField
                         // disabled={props.viewMode}
-                        disabled={(props.first&&!isopensecond)||props.viewMode}
+                        disabled={(props.first&&props.first[d['key']]&&!isopensecond)||props.viewMode}
                                type="number"
                                InputLabelProps={{shrink: true}}
                                inputProps={{style: { textAlign: 'right'},max: 110}}

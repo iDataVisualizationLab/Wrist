@@ -39,6 +39,8 @@ import ResetPassword from "./components/resetPassword";
 import RoundButton from "./components/UI/RoundButton";
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import api from "./components/api";
+import PatientChart from "./components/Wrist/PatientChart";
+import Comment from "./components/Comment";
 
 const THEME = createMuiTheme({
     typography: {
@@ -82,6 +84,8 @@ function App() {
     const [busy, setBusy] = React.useState(false);
     const [userData, setuserData] = React.useState({});
     // const [userInfoView, setuserInfoView] = React.useState(false);
+    const [CommentView, setCommentView] = React.useState(false);
+    const [onNewComment, setonNewComment] = React.useState(false);
     const [IndexView, setIndexView] = React.useState(false);
     const newIndexData = React.useRef({});
     const [onNewIndex, setonNewIndex] = React.useState(false);
@@ -116,9 +120,9 @@ function App() {
         }
         if (reloadUserTable){
             setreloadUserTable(false);
-            axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/list?managerBy=${auth.id}`)
+            api.getPatientsData(auth.id)
                 .then(r=>{
-                    setPatientLists(r.data)
+                    setPatientLists(r)
                 });
         }
     })
@@ -156,8 +160,20 @@ function App() {
      const viewIndex = (data)=>{
          newIndexData.current = data;
          setIndexView(true);
-            setonNewIndex(true);
-        };
+         setonNewIndex(true);
+     };
+
+     const viewComment = (data)=>{
+         newIndexData.current = data;
+         setCommentView(true);
+         setonNewComment(true);
+     }
+
+     const editComment = (data)=>{
+         newIndexData.current = data;
+         setCommentView(false);
+         setonNewComment(true);
+     }
 
     const viewPatient = (data)=>{
         const id = data['_id'];
@@ -204,36 +220,37 @@ function App() {
     };
 
     const newIndex = (firstRecord,history)=>{
-        if (firstRecord){
+        debugger
+        if (firstRecord && Object.keys(firstRecord).length){
             newIndexData.current={
                 "TAM EX-0-Flex": {
                     "Involved Hand": [0, 0],
-                    "Contra-lateral Hand": firstRecord["TAM EX-0-Flex"]["Contra-lateral Hand"],
+                    "Contra-lateral Hand": firstRecord["TAM EX-0-Flex"]?firstRecord["TAM EX-0-Flex"]["Contra-lateral Hand"]:[0,0],
                     "result":0
                 },
                 "TAM Pro-0-Sup": {
                     "Involved Hand": [0, 0],
-                    "Contra-lateral Hand": firstRecord["TAM Pro-0-Sup"]["Contra-lateral Hand"],
+                    "Contra-lateral Hand": firstRecord["TAM Pro-0-Sup"]["Contra-lateral Hand"]?firstRecord["TAM Pro-0-Sup"]["Contra-lateral Hand"]:[0,0],
                     "result":0
                 },
                 "TAM Rad-0-Ulnar": {
                     "Involved Hand": [0, 0],
-                    "Contra-lateral Hand": firstRecord["TAM Rad-0-Ulnar"]["Contra-lateral Hand"],
+                    "Contra-lateral Hand": firstRecord["TAM Rad-0-Ulnar"]["Contra-lateral Hand"]?firstRecord["TAM Rad-0-Ulnar"]["Contra-lateral Hand"]:[0,0],
                     "result":0
                 },
                 "Mean of 3 Trials": {
                     "Involved Hand": [0, 0, 0],
-                    "Contra-lateral Hand": firstRecord["Mean of 3 Trials"]["Contra-lateral Hand"],
+                    "Contra-lateral Hand": firstRecord["Mean of 3 Trials"]["Contra-lateral Hand"]?firstRecord["Mean of 3 Trials"]["Contra-lateral Hand"]:[0,0,0],
                     "result":0
                 },
                 "Grip Strength Supination Ratio": {
                     "Involved Hand": [0],
-                    "Contra-lateral Hand": firstRecord["Grip Strength Supination Ratio"]["Contra-lateral Hand"],
+                    "Contra-lateral Hand": firstRecord["Grip Strength Supination Ratio"]["Contra-lateral Hand"]?firstRecord["Grip Strength Supination Ratio"]["Contra-lateral Hand"]:[0,],
                     "result":0
                 },
                 "Grip Strength Pronation Ratio": {
                     "Involved Hand": [0],
-                    "Contra-lateral Hand": firstRecord["Grip Strength Pronation Ratio"]["Contra-lateral Hand"],
+                    "Contra-lateral Hand": firstRecord["Grip Strength Pronation Ratio"]["Contra-lateral Hand"]?firstRecord["Grip Strength Pronation Ratio"]["Contra-lateral Hand"]:[0,],
                     "result":0
                 },
                 "PSFS": firstRecord["PSFS"],
@@ -264,9 +281,22 @@ function App() {
             });
     };
 
+    const handleCancelNewComment = (d)=>{
+        setonNewComment(false);
+    };
+
+    const handleSubmitNewComment = ()=>{
+        if (!CommentView && newIndexData.current){
+            api.updateRecord({comment:newIndexData.current.comment},newIndexData.current._id).then(r=>{
+                editPatient(userData);
+            }).catch(e=>console.log(e));
+        }
+        setonNewComment(false);
+    }
+
     const handleSubmitNewIndex = ()=>{
         if (!IndexView){
-            axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/record/create`,newIndexData.current)
+            api.submitRecord(newIndexData.current)
                 .then((r)=>{
                     // if (!userData.prefill){
                         axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/${userData._id}`,
@@ -294,9 +324,10 @@ function App() {
                                     ,
                                     "Action":newIndexData.current["Action"],
                                 }
-                            })
+                            }).then(r=>{
+                            editPatient(userData);
+                        })
                     // }
-                    editPatient(userData);
                 }).catch(e=>{
                     console.log(e)
                 // handle error
@@ -334,6 +365,7 @@ function App() {
                               handleSubmitPatient={handleSubmitPatient}
                               viewIndex={viewIndex}
                               editIndex={editIndex}
+                              editComment={editComment}
                               deleteIndex={deleteIndex}
                               onMouseOver={onMouseOverIndex}
                               IndexEditMode={true} newIndex={newIndex}
@@ -353,6 +385,7 @@ function App() {
                               colors={radarColor.current} IndexEditMode={false} newIndex={newIndex}
                               func={api.func} onLoad={onLoad}
                               viewIndex={viewIndex}
+                              viewComment={viewComment}
                               selectedIndex={selectedIndex}/>
                 </Grid>
                     {/*<Grid item xs={7}>*/}
@@ -391,6 +424,7 @@ function App() {
                                 rows={patientLists}
                                 onShare={api.sharePatient}
                                 onLoad={onLoad} newPatient={newPatient}/>
+                    {(auth&&auth.role==='Admin')?<PatientChart label={patientLists.map(d=>({id:d._id,name:d.Initials}))} data={patientLists.map(d=>d.WristIndex)}/>:''}
                 </Container>;
             default:
                 return ''
@@ -567,6 +601,7 @@ function App() {
                 </DialogActions>
             </Dialog>
             {onNewIndex?<WristIndex func={api.func} open={onNewIndex} first={onNewIndex.firstRecord} viewMode={IndexView} handleCancel={handleCancelNewIndex} getOutputData={getOutputData} handleSubmit={handleSubmitNewIndex}/>:''}
+            {onNewComment?<Comment open={onNewComment} viewMode={CommentView} handleCancel={handleCancelNewComment} getOutputData={getOutputData} handleSubmit={handleSubmitNewComment}/>:''}
             <Backdrop className={classes.backdrop} open={busy !== false}>
                 <CircularProgress color="secondary"/>
                 <span>{(busy || {text: ''}).text}</span>

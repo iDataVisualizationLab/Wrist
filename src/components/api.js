@@ -38,7 +38,7 @@ axios.interceptors.response.use(
         const originalRequest = error.config;
         let refreshToken = localStorage.getItem("refreshToken");
         if (
-            refreshToken &&
+            refreshToken &&error.response&&
             error.response.status === 401 &&
             !originalRequest._retry
         ) {
@@ -82,6 +82,31 @@ const api = {
     sharePatient: (data,shareWith) => {
         return axios.post(`${baseUrl}/patientProfile/${data._id}`,{shareWith});
     },
+    recalculate: (d)=>{
+        ["TAM EX-0-Flex", "TAM Pro-0-Sup", "TAM Rad-0-Ulnar", "Mean of 3 Trials", "Grip Strength Supination Ratio", "Grip Strength Pronation Ratio"].forEach(k=>{
+            d[k].result = func[k](d[k]['Involved Hand'],d[k]['Contra-lateral Hand'])
+        });
+
+        d['PSFS score'] = func['PSFS score'](d.PSFS);
+        d['PRWE Pain Scale'] = func['PRWE Pain Scale'](d.PRWE);
+        d['PRWE Function subscale'] = func['PRWE Function subscale'](d.PRWE);
+        d['SANE score'] = func['SANE score'](d.PRWE);
+        d['MHQ score'] = func['MHQ score'](d.MHQ);
+
+        d['Wrist range motion Flexion/Extension'] = d["TAM EX-0-Flex"].result*100;
+        d['Wrist range motion Pronation/Supination'] = d["TAM Pro-0-Sup"].result*100;
+        d['Wrist range motion Radial / Ulnar Deviation'] = d["TAM Rad-0-Ulnar"].result*100;
+        d['Grip Strength Ratio'] = d["Mean of 3 Trials"].result*100;
+        return d;
+    }
+    ,
+    submitRecord :(data)=>{
+        return axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/record/create`,data)
+    },
+    updateRecord :(data,id)=>{
+        return axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/record/${id}`,data)
+    }
+    ,
     getPatientData :(id)=>{
         return  axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/${id}`)
             .then(r=>{
@@ -89,23 +114,26 @@ const api = {
                 // recalculate
                 if (_data["WristIndex"]){
                     _data["WristIndex"].forEach(d=>{
-                        ["TAM EX-0-Flex", "TAM Pro-0-Sup", "TAM Rad-0-Ulnar", "Mean of 3 Trials", "Grip Strength Supination Ratio", "Grip Strength Pronation Ratio"].forEach(k=>{
-                            d[k].result = func[k](d[k]['Involved Hand'],d[k]['Contra-lateral Hand'])
-                        });
-
-                        d['PSFS score'] = func['PSFS score'](d.PSFS);
-                        d['PRWE Pain Scale'] = func['PRWE Pain Scale'](d.PRWE);
-                        d['PRWE Function subscale'] = func['PRWE Function subscale'](d.PRWE);
-                        d['SANE score'] = func['SANE score'](d.PRWE);
-                        d['MHQ score'] = func['MHQ score'](d.MHQ);
-
-                        d['Wrist range motion Flexion/Extension'] = d["TAM EX-0-Flex"].result*100;
-                        d['Wrist range motion Pronation/Supination'] = d["TAM Pro-0-Sup"].result*100;
-                        d['Wrist range motion Radial / Ulnar Deviation'] = d["TAM Rad-0-Ulnar"].result*100;
-                        d['Grip Strength Ratio'] = d["Mean of 3 Trials"].result*100;
+                        api.recalculate(d)
                     })
                 }
                 return _data;
+            })
+    },
+    getPatientsData :(id)=>{
+        return  axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/list?managerBy=${id}`)
+            .then(r=>{
+                const data = r.data;
+                // recalculate
+                r.data.forEach(_data=>{
+                    if (_data["WristIndex"]){
+                        _data["WristIndex"].forEach(d=>{
+                            api.recalculate(d)
+                        })
+                        _data["WristIndex"].sort((a,b)=>+new Date(a.Date) - (+new Date(b.Date)))
+                    }
+                });
+                return data;
             })
     },
     func
