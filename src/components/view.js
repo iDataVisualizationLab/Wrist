@@ -12,17 +12,27 @@ import Redirect from "react-router-dom/es/Redirect";
 import Button from "@material-ui/core/Button";
 import HomeIcon from '@material-ui/icons/Home';
 import api from "./api";
+import TextField from "@material-ui/core/TextField/TextField";
+import Input from "@material-ui/core/Input/Input";
 
 function View(props) {
     let {path, url} = useRouteMatch();
     let location = useLocation();
+    const [pass, setpass] = React.useState('');
+    const [loginState, setloginState] = React.useState(false);
     let {from, message} = location.state || {from: {pathname: "/"}};
 
     function getmessage() {
         if (message) {
             switch (message.status) {
                 case 401:
-                    return <Grid item ><h3>You need an account for view this record. Please login to view</h3></Grid>;
+                    return <>
+                        <Grid item ><h3 style={{display:'inline-block',marginBottom:0,marginRight:10}}>Using password</h3>
+                            <TextField type={'password'} value={pass} onChange={(event)=>setpass(event.target.value)}>Using password</TextField>
+                            <Button variant="contained" color="primary" onClick={()=>props.onrequestByPassword(pass)}>Sent</Button>
+                        </Grid>
+                        <Grid item ><h3>Or, <a style={{color: 'steelBlue'}} onClick={()=>setloginState(!loginState)}>login</a> to view</h3></Grid>
+                    </>;
                 case 403:
                     return <>
                         <Grid item>
@@ -41,8 +51,8 @@ function View(props) {
             </Grid></>;
     }
     function getAction(){
-        if(message&&message.status===401){
-        return props.embededLogin
+        if(message&&message.status===401 && loginState){
+            return props.embededLogin
         }else
         return <Link to={{
             pathname: "/login",
@@ -88,13 +98,12 @@ function SingleView(props) {
     const [redirect, setredirect] = React.useState(false);
     const [selectedIndex, setselectedIndex] = React.useState(undefined);
     const radarColor = React.useRef(props.radarColor ?? scaleOrdinal().range(schemeCategory10));
-    debugger
     useEffect(() => {
         viewPatient();
     }, 0);
     const viewPatient = () => {
         const id = patientId;
-        api.getPatientData(id)
+        api.getPatientData(id,{password:props.pass})
             .then(d => {
                 setuserData(d);
                 radarColor.current.domain([]);
@@ -119,9 +128,17 @@ function SingleView(props) {
             justify="center"
             alignItems="flex-start"
         >
-            <UserInfo data={userData} viewMode={true} userEditMode={false} onMouseOver={onMouseOverIndex}
-                      onLoad={props.onLoad}
-                      colors={radarColor.current} IndexEditMode={false}/>
+            {/*{<UserInfo data={userData} viewMode={true} userEditMode={false} onMouseOver={onMouseOverIndex}*/}
+            {/*          onLoad={props.onLoad}*/}
+            {/*          newIndex={newIndex}*/}
+            {/*          func={api.func}*/}
+            {/*          viewIndex={viewIndex}*/}
+            {/*          viewComment={viewComment}*/}
+            {/*          selectedIndex={selectedIndex}*/}
+            {/*          colors={radarColor.current} IndexEditMode={false}/>}*/}
+            {
+                props.UserInfo(userData)
+            }
         </Grid>
         {/*<Grid item xs={6}>*/}
         {/*    <WristViz onLoad={props.onLoad} data={userData['WristIndex']} selectedIndex={selectedIndex} colors={radarColor.current}/>*/}

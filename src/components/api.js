@@ -19,6 +19,10 @@ const baseUrl = ((process.env.NODE_ENV === 'production')?process.env.REACT_APP_A
 axios.interceptors.request.use(
     (config) => {
         const accessToken = localStorage.getItem("accessToken");
+        if(config.password){
+            config.headers["Authorization"] = 'Bearer ';
+            config.headers["withCredentials"] = true;
+        }
         if (accessToken) {
             config.headers["Authorization"] = `Bearer ${accessToken}`;
             config.headers["withCredentials"] = true;
@@ -38,23 +42,29 @@ axios.interceptors.response.use(
         const originalRequest = error.config;
         let refreshToken = localStorage.getItem("refreshToken");
         if (
-            refreshToken &&error.response&&
+            (refreshToken) &&error.response&&
             error.response.status === 401 &&
             !originalRequest._retry
         ) {
             originalRequest._retry = true;
-            return axios
-                .post(`${baseUrl}/accounts/refresh-token`, { refreshToken: refreshToken })
-                .then((res) => {
-                    if (res.status === 200) {
-                        localStorage.setItem("accessToken", res.data.jwtToken);
-                        console.log("Access token refreshed!");
-                        return axios(originalRequest);
-                    }
-                }).catch(e=>{
-                    return Promise.reject(error);
-                });
+                return axios
+                    .post(`${baseUrl}/accounts/refresh-token`, { refreshToken: refreshToken })
+                    .then((res) => {
+                        if (res.status === 200) {
+                            debugger
+                            localStorage.setItem("accessToken", res.data.jwtToken);
+                            console.log("Access token refreshed!");
+                            return axios(originalRequest);
+                        }
+                    }).catch(e=>{
+                        debugger
+                        return Promise.reject(error);
+                    });
         }
+        else if ( originalRequest.password){
+            return axios(originalRequest);
+        }
+        debugger
         return Promise.reject(error);
     }
 );
@@ -79,8 +89,8 @@ const api = {
         localStorage.setItem("accessToken", null);
         localStorage.setItem("refreshToken", null);
     },
-    sharePatient: (data,shareWith) => {
-        return axios.post(`${baseUrl}/patientProfile/${data._id}`,{shareWith});
+    sharePatient: (data,shareData) => {
+        return axios.post(`${baseUrl}/patientProfile/${data._id}`,shareData);
     },
     recalculate: (d)=>{
         ["TAM EX-0-Flex", "TAM Pro-0-Sup", "TAM Rad-0-Ulnar", "Mean of 3 Trials", "Grip Strength Supination Ratio", "Grip Strength Pronation Ratio"].forEach(k=>{
@@ -107,8 +117,8 @@ const api = {
         return axios.post(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/record/${id}`,data)
     }
     ,
-    getPatientData :(id)=>{
-        return  axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/${id}`)
+    getPatientData :(id,data={})=>{
+        return  axios.get(`${((process.env.NODE_ENV === 'production')?process.env.REACT_APP_API_URL:process.env.REACT_APP_API_URL_LOCAL)}/patientProfile/${id}`,{params:data})
             .then(r=>{
                 const _data = r.data;
                 // recalculate

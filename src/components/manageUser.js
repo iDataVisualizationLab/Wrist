@@ -33,7 +33,11 @@ import TableSortLabel from "@material-ui/core/TableSortLabel";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import WristChart from "./Wrist/WristChart";
 import InfoIcon from '@material-ui/icons/Info';
+import RefreshIcon from '@material-ui/icons/Refresh';
 import Tooltip from "@material-ui/core/Tooltip";
+import FormControlLabel from "@material-ui/core/FormControlLabel/FormControlLabel";
+import Checkbox from "@material-ui/core/Checkbox/Checkbox";
+import generator from "generate-password";
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -205,6 +209,8 @@ function ManageUser(props) {
     const [page, setPage] = React.useState(0);
     const [shareWith, setshareWith] = React.useState([]);
     const [Shareable, setShareable] = React.useState(false);
+    const [isPublic, setisPublic] = React.useState(false);
+    const [password, setpassword] = React.useState('');
     const [sharePatient, setSharePatient] = React.useState(undefined);
     const [copySuccess, setcopySuccess] = React.useState('');
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
@@ -329,7 +335,9 @@ function ManageUser(props) {
                                                 {!row.shareBy&&<IconButton aria-label="share" size="small"
                                                             onClick={() => {
                                                                 setSharePatient(row);
-                                                                setshareWith(row.shareWith ?? [])
+                                                                setshareWith(row.shareWith ?? []);
+                                                                setisPublic(row.isPublic ?? false);
+                                                                setpassword(row.passwordShare ?? '');
                                                             }}>
                                                     <ShareIcon fontSize="inherit"/>
                                                 </IconButton>}
@@ -407,9 +415,59 @@ function ManageUser(props) {
                                 />
                             </Grid>
                             <Grid item xs={12}>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            checked={isPublic}
+                                            onChange={(event)=>{
+                                                if (event.target.checked){
+                                                    setpassword(generator.generate( {
+                                                        length: 10,
+                                                        uppercase: true
+                                                    }))
+                                                }
+                                                setisPublic(event.target.checked);
+                                                setShareable(true);
+                                            }}
+                                            name="checkedB"
+                                            color="primary"
+                                        />
+                                    }
+                                    label="Public Share"
+                                />
+                                {isPublic?<><TextField
+                                    error={((password.length<8) || (!password.match(/^[0-9a-zA-Z]+$/)))?true:null}
+                                    value={password}
+                                    onChange={(event)=>{
+                                        const _pass = event.target.value;
+                                        setpassword(_pass);
+                                        if (_pass.length>=8 && password.match(/^[0-9a-zA-Z]+$/)){
+                                            setShareable(true);
+                                        }else{
+                                            setShareable(false)
+                                        }
+                                    }}
+                                    helperText={password.length<8?"Password length at least 8 character":(!password.match(/^[0-9a-zA-Z]+$/)?"Please input alphanumeric characters only":null)}
+                                />
+                                <IconButton color="primary" aria-label="upload picture" component="span" size="small" onClick={()=>{
+                                    setpassword(generator.generate( {
+                                        length: 10,
+                                        uppercase: true
+                                    }))
+                                    setShareable(true);
+                                }}>
+                                    <RefreshIcon />
+                                </IconButton></>:''}
+                            </Grid>
+                            <Grid item xs={12}>
                                 <Button variant="contained" color="primary"
                                         disabled={!Shareable}
-                                        onClick={()=>{props.onShare(sharePatient,shareWith).then(()=>{sharePatient.shareWith=shareWith});setShareable(false);}}>Share</Button>
+                                        onClick={()=>{props.onShare(sharePatient,{shareWith,isPublic,passwordShare:password}).then(()=>{
+                                            sharePatient.shareWith=shareWith;
+                                            sharePatient.passwordShare=password;
+                                            sharePatient.isPublic=isPublic;
+                                        });
+                                        setShareable(false);}}>Share</Button>
                             </Grid>
                             <Grid item xs={12} container spacing={1}>
                                 <Grid item xs={document.queryCommandSupported('copy') ? 10 : 12}>

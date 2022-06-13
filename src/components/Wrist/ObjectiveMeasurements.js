@@ -101,7 +101,7 @@ function ObjectiveMeasurement(props) {
         props.getOutputData({...data});
     };
     const handleChange = (event, mainKey, subKey, index,max) => {
-        data[mainKey][subKey][index] = max?Math.min(max,event.target.value):event.target.value;
+        data[mainKey][subKey][index] = max?Math.min(max,+event.target.value):+event.target.value;
         data[mainKey].result = props.func[mainKey](data[mainKey]['Involved Hand'],data[mainKey]['Contra-lateral Hand']);
         setData({...data});
         props.getOutputData({...data})
@@ -110,7 +110,7 @@ function ObjectiveMeasurement(props) {
         return data[mainKey][subKey][index]
     };
 
-    const sectionRender = (d,isopensecond) => {
+    const sectionRender = (d,isopensecond,min) => {
         return (<>
             {d.sub.map((e, i) => <Grid item xs container direction="row" alignItems="center" spacing={1}>
                 <Grid item xs>
@@ -123,7 +123,7 @@ function ObjectiveMeasurement(props) {
                                margin="dense"
                                size="small"
                                value={getData(d['key'], 'Involved Hand', i)} fullWidth margin="dense"
-                               onChange={(event) => handleChange(event, d['key'], 'Involved Hand', i,110)}
+                               onChange={(event) => ((+event.target.value<min) && (min!==undefined))?0: handleChange(event, d['key'], 'Involved Hand', i,110)}
                                variant={styleField}/>
                 </Grid>
                 <Grid item className={classes.input}>
@@ -136,16 +136,16 @@ function ObjectiveMeasurement(props) {
                                margin="dense"
                                size="small"
                                value={getData(d['key'], 'Contra-lateral Hand', i)} fullWidth margin="dense"
-                               onChange={(event) => handleChange(event, d['key'], 'Contra-lateral Hand', i,110)}
+                               onChange={(event) => ((+event.target.value<min) && (min!==undefined))?0:handleChange(event, d['key'], 'Contra-lateral Hand', i,110)}
                                variant={styleField}/>
                 </Grid>
             </Grid>)}
             <Grid item xs container direction="row" alignItems="center" spacing={1} className={classes.funcResult}>
                 <Grid item xs>
-                    <span>{d['key']}</span>
+                    <span>{d['title']??d['key']}</span>
                 </Grid>
                 <Grid item className={classes.input2}>
-                    <span className={classes.func}>{data[d['key']].result}</span>
+                    <span className={classes.func}>{Math.round(data[d['key']].result*100)/100}</span>
                 </Grid>
             </Grid></>)
     };
@@ -158,11 +158,11 @@ function ObjectiveMeasurement(props) {
                 <Grid item className={classes.input}>
                     <TextField disabled={props.viewMode} type="number"
                                InputLabelProps={{shrink: true}}
-                               inputProps={{style: { textAlign: 'right'}}}
+                               inputProps={{style: { textAlign: 'right'}, min:0}}
                                margin="dense"
                                size="small"
                                value={getData(d['key'], 'Involved Hand', i)} fullWidth margin="dense"
-                               onChange={(event) => handleChange(event, d['key'], 'Involved Hand', i)}
+                               onChange={(event) => +event.target.value<0?0:handleChange(event, d['key'], 'Involved Hand', i)}
                                variant={styleField}/>
                 </Grid>
                 <Grid item className={classes.input}>
@@ -171,11 +171,11 @@ function ObjectiveMeasurement(props) {
                         disabled={(props.first&&(!openSecond))||props.viewMode}
                         type="number"
                                InputLabelProps={{shrink: true}}
-                               inputProps={{style: { textAlign: 'right'}}}
+                               inputProps={{style: { textAlign: 'right'}, min:0}}
                                margin="dense"
                                size="small"
                                value={getData(d['key'], 'Contra-lateral Hand', i)} fullWidth margin="dense"
-                               onChange={(event) => handleChange(event, d['key'], 'Contra-lateral Hand', i)}
+                               onChange={(event) => +event.target.value<0?0:handleChange(event, d['key'], 'Contra-lateral Hand', i)}
                                variant={styleField}/>
                 </Grid>
             </Grid>)}
@@ -184,7 +184,7 @@ function ObjectiveMeasurement(props) {
                     <span>{d['key']}</span>
                 </Grid>
                 <Grid item className={classes.input2}>
-                    <span className={classes.func}>{data[d['key']].result}</span>
+                    <span className={classes.func}>{Math.round(data[d['key']].result*100)/100}</span>
                 </Grid>
             </Grid></>)
     };
@@ -207,9 +207,9 @@ function ObjectiveMeasurement(props) {
                 </Box>
             </Grid>
         </Grid>
-        {[{key: 'TAM EX-0-Flex', sub: [{text: 'Extension'}, {text: 'Flexion'}]},
-            {key: 'TAM Pro-0-Sup', sub: [{text: 'Pronation'}, {text: 'Supination'}]},
-            {key: 'TAM Rad-0-Ulnar', sub: [{text: 'Radial Deviation'}, {text: 'Ulnar Deviation'}]}].map(d=>sectionRender(d))}
+        {[{key: 'TAM EX-0-Flex',title:'Ratio EX-0-Flex', sub: [{text: 'Extension'}, {text: 'Flexion'}]},
+            {key: 'TAM Pro-0-Sup',title:'Ratio Pro-0-Sup', sub: [{text: 'Pronation'}, {text: 'Supination'}]},
+            {key: 'TAM Rad-0-Ulnar',title:'Ratio Rad-0-Ulnar', sub: [{text: 'Radial Deviation'}, {text: 'Ulnar Deviation'}]}].map(d=>sectionRender(d))}
         <h3 align='center' className={classes.title}>Gripstrength (Dynamometer, Position II)</h3>
         <Grid item xs container direction="row" spacing={1}>
             <Grid item xs>
@@ -228,7 +228,7 @@ function ObjectiveMeasurement(props) {
                 </Box>
             </Grid>
         </Grid>
-        {[{key: 'Mean of 3 Trials', sub: [{text: 'Forearm Neutral 1'}, {text: 'Forearm Neutral 2'}, {text: 'Forearm Neutral 3'}]}].map(d=>sectionRender(d,true))}
+        {[{key: 'Mean of 3 Trials',title:'Ratio mean of 3 Trials', sub: [{text: 'Forearm Neutral 1'}, {text: 'Forearm Neutral 2'}, {text: 'Forearm Neutral 3'}]}].map(d=>sectionRender(d,true,0))}
         {[{key: 'Grip Strength Supination Ratio', sub: [{text: 'Forearm Supination'}]}].map(d=>sectionRender2(d,true))}
         {[{key: 'Grip Strength Pronation Ratio', sub: [{text: 'Forearm Pronation'}]}].map(d=>sectionRender2(d,true))}
     </Grid>)

@@ -81,6 +81,7 @@ const useStyles = makeStyles((theme) => ({
 function App() {
     const classes = useStyles();
     const [auth, setauth] = React.useState(null);
+    const [viewPass, setviewPass] = React.useState('');
     const [busy, setBusy] = React.useState(false);
     const [userData, setuserData] = React.useState({});
     // const [userInfoView, setuserInfoView] = React.useState(false);
@@ -476,6 +477,19 @@ function App() {
                     <Route path="/view">
                         <View
                             token={auth?auth.jwtToken:null}
+                            pass={viewPass}
+                            onrequestByPassword={(viewPass)=>{
+                                debugger
+                                console.log(viewPass)
+                                setviewPass(viewPass);
+                                history.replace(from);
+                            }}
+                            UserInfo={(data)=><UserInfo data={data} viewMode={true} userEditMode={false}  onMouseOver={onMouseOverIndex}
+                                                        colors={radarColor.current} IndexEditMode={false} newIndex={newIndex}
+                                                        func={api.func} onLoad={onLoad}
+                                                        viewIndex={viewIndex}
+                                                        viewComment={viewComment}
+                                                        selectedIndex={selectedIndex}/>}
                             embededLogin={<SignIn
                                 auth={auth}
                                 onSucess={(res) => {
