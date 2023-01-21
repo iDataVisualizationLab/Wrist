@@ -51,20 +51,20 @@ axios.interceptors.response.use(
                     .post(`${baseUrl}/accounts/refresh-token`, { refreshToken: refreshToken })
                     .then((res) => {
                         if (res.status === 200) {
-                            debugger
+                            // debugger
                             localStorage.setItem("accessToken", res.data.jwtToken);
                             console.log("Access token refreshed!");
                             return axios(originalRequest);
                         }
                     }).catch(e=>{
-                        debugger
+                        // debugger
                         return Promise.reject(error);
                     });
         }
         else if ( originalRequest.password){
             return axios(originalRequest);
         }
-        debugger
+        // debugger
         return Promise.reject(error);
     }
 );

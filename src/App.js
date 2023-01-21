@@ -105,7 +105,7 @@ function App() {
         if (firstUpdate.current) {
             firstUpdate.current = false;
             let token = localStorage.getItem("refreshToken");
-            debugger
+            // debugger
             if (token) {
                 try {
                     const res = await api.refreshToken({token});
@@ -207,7 +207,11 @@ function App() {
                 content: 'Delete record : '+  data['Date'],
                 func: () => {
                     const id = data['_id'];
-                    axios.delete(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/record/${id}`)
+                    axios.delete(`${((process.env.NODE_ENV === 'production') ? process.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL_LOCAL)}/record/${id}`,{
+                        params: {
+                            patientId: data['caseId']
+                        }
+                    })
                         .then(r => {
                             setConfirmFunc(false);
                             editPatient({_id:data.caseId});
@@ -221,7 +225,7 @@ function App() {
     };
 
     const newIndex = (firstRecord,history)=>{
-        debugger
+        // debugger
         if (firstRecord && Object.keys(firstRecord).length){
             newIndexData.current={
                 "TAM EX-0-Flex": {
@@ -352,7 +356,7 @@ function App() {
     }
 
     const renderPage = ()=>{
-        debugger
+        // debugger
         switch (page) {
             case 1:
                 return <Grid item xs={5}>
@@ -479,8 +483,8 @@ function App() {
                             token={auth?auth.jwtToken:null}
                             pass={viewPass}
                             onrequestByPassword={(viewPass)=>{
-                                debugger
-                                console.log(viewPass)
+                                // debugger
+                                // console.log(viewPass)
                                 setviewPass(viewPass);
                                 history.replace(from);
                             }}

@@ -83,7 +83,7 @@ function ObjectiveMeasurement(props) {
         let willupdate=false;
         const obj = {...data};
         Object.keys(data).forEach(k=>{
-            debugger
+            // debugger
             const v = props.getOutputData(k);
             if ( v){
                 willupdate = true;

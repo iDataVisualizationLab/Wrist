@@ -89,7 +89,7 @@ class WristChart extends React.Component {
 
     handleData(_data = [[]], _labels = []) {
         const data = _data.map((arr, arri) => {
-            console.log(arr)
+            // console.log(arr)
             const drawData = arr.map((d,i) => {
                 const ob = axis.map(a => a.scale(((typeof (d[a.id]) === 'object') && d[a.id]) ? d[a.id].result : d[a.id]));
                 if (this.props.keyColor)
